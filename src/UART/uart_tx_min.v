@@ -21,9 +21,12 @@
  * - data_in is captured only when a new transfer begins.
  * - busy stays high from start-bit launch until the stop bit completes.
  */
+`default_nettype none
+
 module uart_tx_min
 #(
-    parameter integer CLKS_PER_BIT = 217
+    parameter [31:0] CLOCK_HZ  = 32'd25000000,
+    parameter [31:0] UART_BAUD = 32'd115200
 )
 (
     input  wire       clk,
@@ -33,6 +36,12 @@ module uart_tx_min
     output reg        tx,
     output reg        busy
 );
+    localparam integer CLKS_PER_BIT = CLOCK_HZ / UART_BAUD;
+    localparam integer CLKS_PER_BIT_M1  = CLKS_PER_BIT - 1;
+ // localparam [15:0] CLKS_PER_HALF_M1 = (CLKS_PER_BIT >> 1) - 16'd1;
+ // localparam [15:0] CLKS_PER_BIT_16    = CLKS_PER_BIT[15:0];
+    localparam [15:0] CLKS_PER_BIT_M1_16 = CLKS_PER_BIT_M1[15:0];
+ // localparam [15:0] CLKS_PER_HALF_M1_16 = CLKS_PER_HALF_M1[15:0];
 
     localparam [1:0] ST_IDLE  = 2'd0;
     localparam [1:0] ST_START = 2'd1;
@@ -55,7 +64,7 @@ module uart_tx_min
             tx        <= 1'b1;
             busy      <= 1'b0;
             shift_reg <= 8'h00;
-            bit_index <= 3'd0;
+            bit_index <= 4'd0;
             clk_count <= 16'd0;
         end else begin
             case (state)
@@ -64,7 +73,7 @@ module uart_tx_min
                     tx        <= 1'b1;
                     busy      <= 1'b0;
                     clk_count <= 16'd0;
-                    bit_index <= 3'd0;
+                    bit_index <= 4'd0;
 
                     if (start) begin
                         /*
@@ -82,13 +91,13 @@ module uart_tx_min
                 ST_START: begin
                     busy <= 1'b1;
 
-                    if (clk_count == CLKS_PER_BIT - 1) begin
+                    if (clk_count == CLKS_PER_BIT_M1_16) begin
                         clk_count <= 16'd0;
 
                         /* Put the first payload bit on the line. */
                         tx        <= shift_reg[0];
                         shift_reg <= {1'b0, shift_reg[7:1]};
-                        bit_index <= 3'd1;
+                        bit_index <= 4'd1;
                         state     <= ST_DATA;
                     end else begin
                         clk_count <= clk_count + 1'b1;
@@ -98,7 +107,7 @@ module uart_tx_min
                 ST_DATA: begin
                     busy <= 1'b1;
 
-                    if (clk_count == CLKS_PER_BIT - 1) begin
+                    if (clk_count == CLKS_PER_BIT_M1_16) begin
                         clk_count <= 16'd0;
 
                         if (bit_index < 4'd8) begin
@@ -119,7 +128,7 @@ module uart_tx_min
                 ST_STOP: begin
                     busy <= 1'b1;
 
-                    if (clk_count == CLKS_PER_BIT - 1) begin
+                    if (clk_count == CLKS_PER_BIT_M1_16) begin
                         clk_count <= 16'd0;
                         state     <= ST_IDLE;
                     end else begin
@@ -135,3 +144,5 @@ module uart_tx_min
     end
 
 endmodule
+
+`default_nettype wire

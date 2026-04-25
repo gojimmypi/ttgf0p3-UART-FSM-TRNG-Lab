@@ -15,7 +15,8 @@ Currently does nothing, just to pass CI. It does however, now pass all CI tests!
 ## How to test
 
 Commit changes. This edit to resolve [viewer failure](https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab/actions/runs/24773767679/job/72487081832). 
-See [My GitHub action is failing on the pages part.](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part) and cannot manually re-run.
+See [My GitHub action is failing on the pages part](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part) and cannot manually re-run.
+
 ### Test on ULX3S FPGA
 
 See the [ulx3s](../ulx3s/) directory.

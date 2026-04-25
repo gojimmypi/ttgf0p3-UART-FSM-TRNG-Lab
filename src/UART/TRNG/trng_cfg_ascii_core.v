@@ -30,6 +30,8 @@
  * - Version query   : Version 1.2.0 4/23/2026<CR>
  * - Parse/error     : ?<CR>
  */
+`default_nettype none
+
 module trng_cfg_ascii_core
 (
     input  wire       clk,
@@ -72,10 +74,13 @@ module trng_cfg_ascii_core
     localparam [4:0] ST_Q_K        = 5'd11;
     localparam [4:0] ST_Q_ERR      = 5'd12;
     localparam [4:0] ST_WAIT_SEND  = 5'd13;
-    localparam [4:0] ST_Q_STR      = 5'd14;
 
+`ifdef USE_LONG_STRINGS
+    localparam [4:0] ST_Q_STR      = 5'd14;
     localparam integer VERSION_LEN = 23;
     localparam [8*VERSION_LEN-1:0] VERSION_STR = "Version 1.2.0 4/23/2026";
+`else
+`endif
 
     reg [4:0] state;
     reg [4:0] next_state_after_send;
@@ -91,6 +96,11 @@ module trng_cfg_ascii_core
     reg [2:0] read_addr;
     reg [7:0] reply_value;
 
+    /* This is a GDC linting hack */
+    wire [3:0] decoded_hex;
+    assign decoded_hex = hex_value(rx_byte);
+    wire _unused_decoded_hex = decoded_hex[3];
+
     /*
      * One-byte transmit queue.
      * The parser loads queued_tx_byte, and the front-end launches it only when
@@ -99,6 +109,7 @@ module trng_cfg_ascii_core
     reg [7:0] queued_tx_byte;
     reg       queued_tx_valid;
 
+`ifdef USE_LONG_STRINGS
     /*
      * Generic string send support for multi-character replies such as version.
      * active_str holds the current packed ASCII string, str_len is the number
@@ -108,6 +119,8 @@ module trng_cfg_ascii_core
     reg [8*VERSION_LEN-1:0] active_str;
     reg [5:0] str_index;
     reg [5:0] str_len;
+`else
+`endif
 
     function is_hex;
         input [7:0] c;
@@ -126,9 +139,13 @@ module trng_cfg_ascii_core
         input [7:0] c;
         begin
             if ((c >= "0") && (c <= "9")) begin
-                hex_value = c - "0";
+                /* hex_value = c - "0"; 2 each 8-bit literals to avoid Verilog treating the result as a full byte instead of a nibble. */
+                // hex_value = (c - 8'd48) & 8'h0F;  // "0" = 48
+                hex_value = c[3:0];
             end else if ((c >= "A") && (c <= "F")) begin
-                hex_value = c - "A" + 4'd10;
+                // hex_value = c - "A" + 4'd10;
+                // hex_value = (c - 8'd65 + 4'd10) & 8'h0F;  // "A" = 65
+                hex_value = c[3:0] + 4'd9;
             end else begin
                 hex_value = 4'h0;
             end
@@ -161,14 +178,17 @@ module trng_cfg_ascii_core
     function [7:0] to_hex_ascii;
         input [3:0] nib;
         begin
-            if (nib < 10) begin
-                to_hex_ascii = "0" + nib;
+            if (nib < 4'd10) begin
+                //           =  8'd48  + nib;           // '0' + nib
+                to_hex_ascii = {4'b0011, nib};          // '0'..'9'
             end else begin
-                to_hex_ascii = "A" + (nib - 10);
+                //           =  8'd55  + nib;           // 'A' - 10 + nib  (65 - 10 = 55)
+                to_hex_ascii = {4'b0011, nib} + 8'd7;   // 'A'..'F'
             end
         end
     endfunction
 
+`ifdef USE_LONG_STRINGS
     /*
      * Return one ASCII character from a packed string.
      * Index 0 returns the leftmost character in the packed constant.
@@ -176,12 +196,18 @@ module trng_cfg_ascii_core
     function [7:0] str_get;
         input [8*VERSION_LEN-1:0] str;
         input [5:0] idx;
-        reg [8*VERSION_LEN-1:0] shifted;
+        reg [7:0] shift_amt;
         begin
-            shifted = str >> ((VERSION_LEN - 1 - idx) * 8);
-            str_get = shifted[7:0];
+            shift_amt = (VERSION_LEN[7:0] - 8'd1 - {2'd0, idx}) << 3;
+
+            // Extract one byte from packed string "str".
+            // shift_amt is a byte-aligned bit index (0, 8, 16, ...).
+            // [shift_amt +: 8] means take 8 bits starting at shift_amt (i.e., str[shift_amt+7 : shift_amt]).
+            str_get = str[shift_amt +: 8];
         end
     endfunction
+`else
+`endif
 
     /*
      * Write decoded values into specific register fields.
@@ -213,6 +239,7 @@ module trng_cfg_ascii_core
         end
     endtask
 
+`ifdef USE_LONG_STRINGS
     /*
      * Start sending a packed ASCII string using the generic string serializer.
      * The actual characters are launched through the normal one-byte queue.
@@ -227,6 +254,8 @@ module trng_cfg_ascii_core
             state      <= ST_Q_STR;
         end
     endtask
+`else
+`endif
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -244,9 +273,12 @@ module trng_cfg_ascii_core
             tx_byte               <= 8'h00;
             tx_start              <= 1'b0;
 
+`ifdef USE_LONG_STRINGS
             active_str            <= {(8 * VERSION_LEN){1'b0}};
             str_index             <= 6'd0;
             str_len               <= 6'd0;
+`else
+`endif
 
             /* Default power-on register values for bring-up. */
             reg_ctrl              <= 8'h00;
@@ -307,14 +339,22 @@ module trng_cfg_ascii_core
                         if ((cmd == "V") && (rx_byte == 8'h0A)) begin
                             state <= ST_ARG1;
                         end else if ((cmd == "V") && (rx_byte == 8'h0D)) begin
+`ifdef USE_LONG_STRINGS
                             start_string(VERSION_STR, VERSION_LEN[5:0]);
+`else
+    state <= ST_Q_ERR;/* */
+`endif
                         end else if (is_hex(rx_byte)) begin
                             hex1 <= hex_value(rx_byte);
 
                             if (cmd == "R") begin
                                 /* Only registers 0..7 are addressable. */
                                 if (hex_value(rx_byte) < 4'd8) begin
-                                    read_addr <= hex_value(rx_byte);
+                                    // Passes Verilator, not GDS:
+                                    // read_addr <= hex_value(rx_byte)[2:0];
+                                    // So:
+                                    read_addr <= decoded_hex[2:0];
+                                    
                                     state <= ST_WAIT_CR;
                                 end else begin
                                     state <= ST_Q_ERR;
@@ -439,6 +479,7 @@ module trng_cfg_ascii_core
                     end
                 end
 
+`ifdef USE_LONG_STRINGS
                 /*
                  * Generic packed-string sender.
                  * Characters are emitted one at a time through the normal queue
@@ -458,6 +499,8 @@ module trng_cfg_ascii_core
                         end
                     end
                 end
+`else
+`endif
 
                 /*
                  * Stay here until the queued byte has been accepted and the UART
@@ -478,3 +521,5 @@ module trng_cfg_ascii_core
     end
 
 endmodule
+
+`default_nettype wire

@@ -12,18 +12,29 @@
  * - Surfaces a few internal status bits on GPIOs for simple board-level debug.
  *
  * Pin usage in this wrapper:
- * - ui_in[3]  : UART RX input to the core
- * - uo_out[4] : UART TX output from the core
- * - uo_out[0] : trng_bit
- * - uo_out[3:1] : selected status bits
- * - uo_out[7:5] : selected low raw-data bits
+ * - ui_in[7:4]   : reserved for future use, currently ignored
+ * - ui_in[3]     : UART RX input to the core
+ * - ui_in[2:0]   : reserved for future use, currently ignored
+ *
+ * - uo_out[7:5]  : selected low raw-data bits
+ * - uo_out[4]    : UART TX output from the core
+ * - uo_out[3:1]  : selected status bits
+ * - uo_out[0]    : trng_bit
+ *
  * - uio_out[7:0] : full reg_rawhi byte
- * - uio_oe[7:0] : all forced as outputs
+ *
+ * - uio_oe[7:0]  : all forced as outputs
  *
  * This module contains almost no behavior of its own. It is mostly a pin-map
  * and visibility wrapper around uart_trng_ascii_core.
  */
-module tt_um_uart_trng_ascii
+`default_nettype none
+
+module tt_um_uart_trng_ascii 
+#(
+    parameter [31:0] CLOCK_HZ  = 32'd25000000,
+    parameter [31:0] UART_BAUD = 32'd115200
+)
 (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
@@ -34,13 +45,6 @@ module tt_um_uart_trng_ascii
     input  wire       clk,
     input  wire       rst_n
 );
-
-    /*
-     * Fixed local baud divider for this TT wrapper.
-     * The underlying core is parameterized, but this wrapper locks the value to
-     * the known bring-up setting used in the recent ULX3S/TT work.
-     */
-    localparam integer CLKS_PER_BIT = 217;
 
     /* Internal debug/configuration buses exported by the core. */
     wire [7:0] reg_ctrl;
@@ -54,6 +58,18 @@ module tt_um_uart_trng_ascii
     wire       trng_bit;
     wire       uart_tx;
 
+    wire _unused_ui_in = &{ui_in[7:4], ui_in[2:0]};
+
+    wire _unused_debug_regs = &{
+        reg_ctrl,
+        reg_src,
+        reg_div,
+        reg_mode,
+        reg_oscen,
+        reg_status[7:3],
+        reg_rawlo[7:3]
+    };
+
     /*
      * Keep unused TT inputs referenced so synthesis does not warn.
      * ena is mandatory in the TT interface but not functionally used here.
@@ -64,7 +80,8 @@ module tt_um_uart_trng_ascii
 
     uart_trng_ascii_core
     #(
-        .CLKS_PER_BIT(CLKS_PER_BIT)
+        .CLOCK_HZ(CLOCK_HZ),
+        .UART_BAUD(UART_BAUD)
     )
     u_core
     (
@@ -102,3 +119,5 @@ module tt_um_uart_trng_ascii
     assign uio_oe  = 8'hFF;
 
 endmodule
+
+`default_nettype wire

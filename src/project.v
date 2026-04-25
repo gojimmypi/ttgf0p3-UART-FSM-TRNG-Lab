@@ -7,6 +7,10 @@
  * Top-level wrapper for the Tiny Tapeout project.
  */
 
+/* There's about a 5% (~ 100 cells) increase in the number of cells when using long strings.
+ * Currently only the version string is implemented. */
+`define USE_LONG_STRINGS
+
 `ifdef ULX3S
     /* Makefile includes references to needed files */
 `else
@@ -20,19 +24,35 @@
 `endif /* ULX3S */
 
 `default_nettype none
-`timescale 1ns/1ps
+
+`ifdef ULX3S
+    `timescale 1ns/1ps
+`else
+    /* Tiny Tapeout doesn't support timescale directives, so we can ignore it. */
+`endif /* ULX3S */
 
 /* Assume TT needs this file to be called project.v but the module is called tt_um_gojimmypi - so disable warning: */
 /* verilator lint_off DECLFILENAME */
-module tt_um_gojimmypi (
+module tt_um_gojimmypi
 /* verilator lint_on DECLFILENAME */
+#(
+    parameter [31:0] CLOCK_HZ  = 32'd25000000,
+    parameter [31:0] UART_BAUD = 32'd115200
+)
+(
+    // Optional Analog
+    //    input  wire       VGND,
+    //    input  wire       VDPWR,    // 1.8v power supply
+    //    input  wire       VAPWR,    // 3.3v power supply
 
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
     input  wire [7:0] uio_in,   // IOs: Input path
     output wire [7:0] uio_out,  // IOs: Output path
     output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    
+
+    //    inout  wire [7:0] ua,       // Analog pins, only ua[5:0] can be used
+
     input  wire       ena,      // always 1 when the design is powered, so you can ignore it
     input  wire       clk,      // clock
     input  wire       rst_n     // reset_n - low to reset
@@ -40,7 +60,12 @@ module tt_um_gojimmypi (
 
     wire unused_ok;
 
-    tt_um_uart_trng_ascii u_core
+    tt_um_uart_trng_ascii 
+    #(
+        .CLOCK_HZ(CLOCK_HZ),
+        .UART_BAUD(UART_BAUD)
+    )
+    u_core
     (
         .ui_in(ui_in),
         .uo_out(uo_out),
@@ -51,6 +76,9 @@ module tt_um_gojimmypi (
         .clk(clk),
         .rst_n(rst_n)
     );
+
+    // Optional Analog
+    // assign unused_ok = &{VGND, VDPWR, ena, clk, rst_n, uio_in, ua};
 
     assign unused_ok = &{ena, clk, rst_n, uio_in};
 

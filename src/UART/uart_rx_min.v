@@ -22,9 +22,12 @@
  *   can validate the center of the start bit.
  * - It then samples once per bit period for each data bit and stop bit.
  */
+`default_nettype none
+
 module uart_rx_min
 #(
-    parameter integer CLKS_PER_BIT = 217
+    parameter [31:0] CLOCK_HZ  = 32'd25000000,
+    parameter [31:0] UART_BAUD = 32'd115200
 )
 (
     input  wire       clk,
@@ -33,6 +36,12 @@ module uart_rx_min
     output reg [7:0]  data_out,
     output reg        data_valid
 );
+    localparam integer CLKS_PER_BIT = CLOCK_HZ / UART_BAUD;
+    localparam integer CLKS_PER_BIT_M1  = CLKS_PER_BIT - 1;
+    localparam integer CLKS_PER_HALF_M1 = (CLKS_PER_BIT >> 1) - 1;
+ // localparam [15:0] CLKS_PER_BIT_16    = CLKS_PER_BIT[15:0];
+    localparam [15:0] CLKS_PER_BIT_M1_16 = CLKS_PER_BIT_M1[15:0];
+    localparam [15:0] CLKS_PER_HALF_M1_16 = CLKS_PER_HALF_M1[15:0];
 
     localparam [1:0] ST_IDLE  = 2'd0;
     localparam [1:0] ST_START = 2'd1;
@@ -50,7 +59,7 @@ module uart_rx_min
 
     /* Bit-period counter and current-bit index. */
     reg [15:0] clk_count;
-    reg [3:0]  bit_index;
+    reg [2:0]  bit_index;
 
     /* Shift register receives the byte LSB first. */
     reg [7:0]  shift_reg;
@@ -97,7 +106,7 @@ module uart_rx_min
                      * Sample in the middle of the start bit. If the line has
                      * returned high, it was likely just noise or a glitch.
                      */
-                    if (clk_count == ((CLKS_PER_BIT - 1) >> 1)) begin
+                    if (clk_count == CLKS_PER_HALF_M1_16) begin
                         if (rx_sync == 1'b0) begin
                             clk_count <= 16'd0;
                             bit_index <= 3'd0;
@@ -116,7 +125,7 @@ module uart_rx_min
                      * Because UART is LSB-first, bit_index maps directly to the
                      * destination bit position.
                      */
-                    if (clk_count == CLKS_PER_BIT - 1) begin
+                    if (clk_count == CLKS_PER_BIT_M1_16) begin
                         clk_count <= 16'd0;
                         shift_reg[bit_index] <= rx_sync;
 
@@ -135,7 +144,7 @@ module uart_rx_min
                      * Check for a valid stop bit. Only then is the received byte
                      * presented and data_valid pulsed for one clock.
                      */
-                    if (clk_count == CLKS_PER_BIT - 1) begin
+                    if (clk_count == CLKS_PER_BIT_M1_16) begin
                         clk_count <= 16'd0;
 
                         if (rx_sync == 1'b1) begin
@@ -157,3 +166,5 @@ module uart_rx_min
     end
 
 endmodule
+
+`default_nettype wire

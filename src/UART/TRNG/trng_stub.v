@@ -16,6 +16,8 @@
  * - This is not true random data.
  * - It is an LFSR-based pseudo-random source controlled by a simple divider.
  */
+`default_nettype none
+
 module trng_stub
 (
     input  wire       clk,
@@ -24,7 +26,7 @@ module trng_stub
     input  wire [7:0] reg_src,
     input  wire [7:0] reg_div,
     input  wire [7:0] reg_mode,
-    input  wire [7:0] reg_oscen,
+    input  wire       reg_oscen, /* oscillator enable */
     output reg  [7:0] reg_status,
     output reg  [7:0] reg_rawlo,
     output reg  [7:0] reg_rawhi,
@@ -38,6 +40,13 @@ module trng_stub
     reg [15:0] sample_ctr;
     reg [15:0] lfsr;
     wire trng_enable;
+
+    /* These are 8-bit UART-visible registers. The stub currently uses only
+     * selected low bits. Upper bits are reserved for future TRNG controls.
+     */
+    wire _unused_reg_ctrl  = &reg_ctrl[7:3];
+    wire _unused_reg_src   = &reg_src[7:2];
+    wire _unused_reg_mode  = &reg_mode[7:3];
 
     /* Enable bit comes from reg_ctrl[0], matching the ASCII register front-end. */
     assign trng_enable = reg_ctrl[0];
@@ -76,7 +85,7 @@ module trng_stub
                      * reg_oscen[0] and reg_src[0] are mixed in so command writes
                      * visibly influence the stub output during bring-up.
                      */
-                    lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10] ^ reg_oscen[0] ^ reg_src[0]};
+                    lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10] ^ reg_oscen ^ reg_src[0]};
                     reg_rawlo <= lfsr[7:0];
                     reg_rawhi <= lfsr[15:8];
                 end else begin
@@ -87,3 +96,5 @@ module trng_stub
     end
 
 endmodule
+
+`default_nettype wire
