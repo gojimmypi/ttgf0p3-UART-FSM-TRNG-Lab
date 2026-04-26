@@ -39,7 +39,7 @@
  * but the module is called tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab - so disable warning: */
 
 /* verilator lint_off DECLFILENAME */
-module tt_um_gojimmypi_ttsky_UART_FSM_TRNG_Lab
+module tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
 /* verilator lint_on DECLFILENAME */
 #(
     parameter [31:0] CLOCK_HZ  = 32'd25000000,
