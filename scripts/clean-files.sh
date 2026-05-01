@@ -2,13 +2,12 @@
 
 for f in \
   ./project.v \
-  ./tt_um_uart_trng_ascii.v \
+  ./tt_um_main.v \
   ./UART/TRNG/trng_cfg_ascii_core.v \
   ./UART/TRNG/trng_stub.v \
   ./UART/uart_rx_min.v \
   ./UART/uart_trng_ascii_core.v \
-  ./UART/uart_tx_min.v \
-  ./UART/ulx3s_uart_trng_ascii_top.v
+  ./UART/uart_tx_min.v 
 do
   echo "Processing: $f"
 

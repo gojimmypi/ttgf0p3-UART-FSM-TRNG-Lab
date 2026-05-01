@@ -29,4 +29,3 @@ pushd ../src || exit 1
               --top-module tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab   \
               project.v
 popd || exit 1
-

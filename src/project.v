@@ -14,12 +14,22 @@
 /* There's about a 5% (~ 100 cells) increase in the number of cells when using long strings.
  * Currently only the version string is implemented. */
 `define USE_LONG_STRINGS
+`define UART_ENABLED
+`define SPI_ENABLED
+
+/* optionally define an SPI test byte. Default is 0x42 */
+`define SPI_TEST_BYTE 8'hD2
+
+/* Pick zero or one of these SPI tests: */
+`define SPI_TEST_FIXED
+// `define SPI_TEST_ECHO
 
 `ifdef ULX3S
-    /* Makefile includes references to needed files */
+    /* /ulx3s/Makefile includes references to needed files */
 `else
-    /* Tiny Tapeout needs to include all the files directly since it doesn't support Makefiles. */
-    `include "tt_um_uart_trng_ascii.v"
+    /* Tiny Tapeout needs to include all the files directly since it doesn't support Makefiles.
+     * or list them in /info.yaml file (pick one, don't mix) */
+    `include "tt_um_main.v"
     `include "UART/uart_rx_min.v"
     `include "UART/uart_tx_min.v"
     `include "UART/uart_trng_ascii_core.v"
@@ -33,7 +43,7 @@
     /* Tiny Tapeout doesn't support timescale directives, so we can ignore it. */
 `endif /* ULX3S */
 
-/* See companion prject: SKY130 (ChipFoundry) tt_um_gojimmypi_ttsky_UART_FSM_TRNG_Lab */
+/* See companion project: SKY130 (ChipFoundry) tt_um_gojimmypi_ttsky_UART_FSM_TRNG_Lab */
 
 /* Assume TT needs this file to be called project.v 
  * but the module is called tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab - so disable warning: */
@@ -42,8 +52,8 @@
 module tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
 /* verilator lint_on DECLFILENAME */
 #(
-    parameter [31:0] CLOCK_HZ  = 32'd25000000,
-    parameter [31:0] UART_BAUD = 32'd115200
+    parameter [31:0] CLOCK_HZ  = 32'd25000000,  /* default clock is 25 MHz     */
+    parameter [31:0] UART_BAUD = 32'd115200     /* default UART is 115200 baud */
 )
 (
     // Optional Analog
@@ -66,7 +76,7 @@ module tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
 
     wire unused_ok;
 
-    tt_um_uart_trng_ascii 
+    tt_um_main
     #(
         .CLOCK_HZ(CLOCK_HZ),
         .UART_BAUD(UART_BAUD)
@@ -104,5 +114,12 @@ module tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
     `endif /* ULX3S */
 
 endmodule
+
+/* Sttings Sanity Check */
+`ifdef SPI_TEST_FIXED
+    `ifdef SPI_TEST_ECHO
+        MODULE_SPI_TEST_ECHO_MUST_NOT_BE_ENABLED_WITH_SPI_TEST_FIXED u_stop ();
+    `endif
+`endif
 
 `default_nettype wire
