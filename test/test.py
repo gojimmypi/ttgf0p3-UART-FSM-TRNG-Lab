@@ -55,7 +55,13 @@ async def uart_send_bytes(dut, data: bytes) -> None:
 
 
 def get_uart_tx_bit(dut) -> int:
-    return int(dut.uo_out[UART_TX_BIT].value)
+    uo_value = dut.uo_out.value
+    tx_value = uo_value[UART_TX_BIT]
+
+    if tx_value.binstr not in ("0", "1"):
+        raise ValueError(f"UART TX bit is not 0 or 1: {tx_value.binstr}")
+
+    return int(tx_value)
 
 
 async def uart_recv_byte(dut, idle_timeout_ns: int | None = None) -> int:
