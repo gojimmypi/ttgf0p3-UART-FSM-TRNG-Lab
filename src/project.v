@@ -28,7 +28,7 @@
 `define SPI_ENABLED
 `define SPI_REG_ACCESS
 `define TRNG_ENABLED
-`define JTAG_ENABLED 
+// `define JTAG_ENABLED 
 
 /* SPI_TEST_BYTE is only used when SPI_TEST_FIXED is enabled. */
 // `define SPI_TEST_BYTE 8'hD2
@@ -52,29 +52,39 @@
 
     /* TODO: detect test modes? add "is submission" macro? */
 
-    /* HACK ALERT: checking __pnr__,  gf180mcu_fd_sc_mcu7t5v0, SCL_sky130_fd_sc_hd may not be 100% reliable!! */
+    /* HACK ALERT: checking __pnr__,  SCL_gf180mcu_fd_sc_mcu7t5v0, SCL_sky130_fd_sc_hd may not be 100% reliable!! */
     `ifdef SCL_sky130_fd_sc_hd
         /* Less hacky is to detect the presence of a cell that is only available in the real RO-based TRNG for SKY130, 
          * but this also isn't perfect since it could be used in a non-TT context. */
         `define TRNG_USE_RO
         `define TRNG_ALLOW_REAL_RO
-    `elsif gf180mcu_fd_sc_mcu7t5v0
+        `define FOUND_TT_PDK
+    `elsif SCL_gf180mcu_fd_sc_mcu7t5v0
         /* Less hacky is to detect the presence of a cell that is only available in the real RO-based TRNG for GF180, 
          * but this also isn't perfect since it could be used in a non-TT context. */
         `define TRNG_USE_RO
         `define TRNG_ALLOW_REAL_RO
+        `define FOUND_TT_PDK
+        PROJECT_FOUND_TT_PDK_GF180 u_stop ();
     `elsif __pnr__
         /* More hacky is __pnr__ and still does not conclusively prove that we are building for Tiny Tapeout, 
          * but it is a strong indicator that we are in an environment where the real RO-based TRNG can be used. */
         `define TRNG_USE_RO
         `define TRNG_ALLOW_REAL_RO
+        `define FOUND_TT_PDK
     `else
+        /* End of possible TT detection. Assume we are in some other non-ULX3S, non-ASIC environment. */
+
         /* some other non ULX3S, non ASIC path. Detect if REAL RO defined externally and abort */
         `ifdef TRNG_USE_RO
             PROJECT_NON_ASIC_MUST_NOT_USE_TRNG_USE_RO u_stop ();
         `endif
         `ifdef TRNG_ALLOW_REAL_RO
             PROJECT_NON_ASIC_MUST_NOT_USE_TRNG_ALLOW_REAL_RO u_stop ();
+        `endif
+
+        `ifdef FOUND_TT_PDK
+            PROJECT_FOUND_TT_PDK_BUT_NOT_REAL_RO u_stop (); /* We can only "find" the PDF here! */
         `endif
     `endif
 `endif

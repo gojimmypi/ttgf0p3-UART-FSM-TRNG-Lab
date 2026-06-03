@@ -93,30 +93,31 @@ module tt_um_main
     wire [2:0] spi_reg_addr;
     wire [7:0] spi_reg_wdata;
     wire [7:0] spi_reg_rdata;
-`ifdef SPI_ENABLED
-    wire       spi_slave_reg_wr_en;
-    wire [2:0] spi_slave_reg_addr;
-    wire [7:0] spi_slave_reg_wdata;
-`endif
-`ifdef JTAG_ENABLED
-    wire       jtag_reg_wr_en;
-    wire [7:0] jtag_reg_addr;
-    wire [7:0] jtag_reg_wdata;
-    wire _unused_jtag_reg_addr = &{1'b0, jtag_reg_addr[7:3]};
-`endif
-`endif
+
+    `ifdef SPI_ENABLED
+        wire       spi_slave_reg_wr_en;
+        wire [2:0] spi_slave_reg_addr;
+        wire [7:0] spi_slave_reg_wdata;
+    `endif
+    `ifdef JTAG_ENABLED
+        wire       jtag_reg_wr_en;
+        wire [7:0] jtag_reg_addr;
+        wire [7:0] jtag_reg_wdata;
+        wire _unused_jtag_reg_addr = &{1'b0, jtag_reg_addr[7:3]};
+    `endif
+`endif /* SPI_REG_ACCESS */
 
 `ifdef SPI_ENABLED
     wire spi_sck;
     wire spi_mosi;
     wire spi_cs_n;
     wire spi_miso;
-`ifndef SPI_REG_ACCESS
-    wire       spi_unused_reg_wr_en;
-    wire [2:0] spi_unused_reg_addr;
-    wire [7:0] spi_unused_reg_wdata;
-`endif
-`endif
+    `ifndef SPI_REG_ACCESS
+        wire       spi_unused_reg_wr_en;
+        wire [2:0] spi_unused_reg_addr;
+        wire [7:0] spi_unused_reg_wdata;
+    `endif
+`endif /* SPI_ENABLED */
 
 `ifdef JTAG_ENABLED
     wire jtag_tck;
@@ -128,10 +129,15 @@ module tt_um_main
 
     /* TODO check unused wires when SPI and/or UART not enabled */
 `ifdef SPI_ENABLED
-    wire _unused_ui_in = &{ui_in[7:5], ui_in[2:0]};
+    `ifdef JTAG_ENABLED
+        wire _unused_ui_in = &{ui_in[7:5], ui_in[2:0]};
+    `else
+        wire _unused_ui_in = &{ui_in[7:4], ui_in[2:0]};
+    `endif
 `else
+    /* not SPI_ENABLED */
     wire _unused_inputs = &{ui_in[7:4], uio_in[2], ui_in[2:0]};
-`endif
+`endif /* !SPI_ENABLED */
 
     wire _unused_debug_regs = &{
         reg_ctrl,
@@ -235,6 +241,7 @@ module tt_um_main
 
     jtag_core u_jtag_core
     (
+        .clk(clk),
         .rst_n(rst_n),
         .ena(ena & debug_is_jtag),
         .tck_i(jtag_tck),
@@ -256,7 +263,7 @@ module tt_um_main
     );
 `else
     /* No JTAG */
-    assign debug_is_jtag = 1'b0;
+    /* assign debug_is_jtag = 1'b0; */
 `endif
 
 
