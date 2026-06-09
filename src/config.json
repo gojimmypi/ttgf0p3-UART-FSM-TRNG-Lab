@@ -7,9 +7,9 @@
   "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 30,
 
   "STA_CORNERS": [
-    "nom_tt_085C_3v30",
-    "min_tt_085C_3v30",
-    "max_tt_085C_3v30"
+    "nom_ss_085C_3v30",
+    "min_ss_085C_3v30",
+    "max_ss_085C_3v30"
   ],
   "LIB": {
     "*_ss_085C_3v30": [
