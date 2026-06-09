@@ -39,8 +39,8 @@ These changes have been applied / added to `src\config.json`:
   "RUN_POST_GRT_DESIGN_REPAIR": "true",
   "RUN_POST_GPL_DESIGN_REPAIR": "true",
 
-  "DESIGN_REPAIR_MAX_SLEW_PCT": 35,
-  "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 40,
+  "DESIGN_REPAIR_MAX_SLEW_PCT": 30,
+  "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 35,
 ```
 
 First GDS Post Design Repair log in GF180: [GRT / GPL Design Repair Test #49](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/runs/27211329394/job/80340895326) 
@@ -54,6 +54,8 @@ SKY130 JTAG-enabled build: setup/hold clean at 50 MHz, DRC/LVS/antenna/lint clea
 SKY130 success: [Increase slew repair to 40 percent #191](https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab/actions/runs/27223286366)
 
 GF180 failure: [Increase slew repair to 40 percent #52](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/runs/27223337383)
+
+GF180 was not better at 35/40: [Decrease DESIGN_REPAIR_MAX_SLEW_PCT to 35 #53](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/runs/27225823087/job/80392609949)
 
 References:
 
