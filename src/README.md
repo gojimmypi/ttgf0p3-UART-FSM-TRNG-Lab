@@ -17,3 +17,11 @@
  - `src\TRNG\trng_stub.v` - a stub TRNG core that can be used for testing the UART functionality without the complexity of a real TRNG. It generates pseudo-random numbers based on a simple counter and some bit manipulation, and sends them over UART when a specific command is received. This can be useful for testing the UART communication and command parsing without needing a real TRNG implementation.
  - `src\TRNG\trng_lab_core.v` - an optional TRNG lab core that provides an alternative to the `trng_stub` for experimentation and testing purposes.
  
+ ## Config edits
+
+ See [suggestion](https://discord.com/channels/1009193568256135208/1513299711975489566/1513680659447812276)
+
+ ```
+  "RUN_POST_GRT_DESIGN_REPAIR": "True",
+  "RUN_POST_GPL_DESIGN_REPAIR": "True",
+```
