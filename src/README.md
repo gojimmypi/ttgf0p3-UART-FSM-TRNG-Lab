@@ -78,3 +78,4 @@ References:
 
 - [LibreLane Option 1 — Macro-First Hardening strategy](https://librelane.readthedocs.io/en/stable/additional_material/caravel/macro_first_hardening/index.html)
 - [Module 3: Routing and Physical Optimization](https://silicon-sprint-auc.readthedocs.io/en/latest/MODULE3.html)
+- [GlobalFoundries 180nm MCU 7 track standard cells libraries](https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/tree/main/liberty)
