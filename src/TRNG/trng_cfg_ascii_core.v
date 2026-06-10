@@ -122,7 +122,7 @@ module trng_cfg_ascii_core
     /* Optionally make UART command letters case-insensitive. */
     wire [7:0] rx_cmd;
 `ifdef CASE_INSENSITIVE
-    assign rx_cmd = {rx_byte[7:6], 1'b0, rx_byte[4:0]};
+    assign rx_cmd = ((rx_byte >= "a") && (rx_byte <= "z")) ? {rx_byte[7:6], 1'b0, rx_byte[4:0]} : rx_byte;
 `else
     assign rx_cmd = rx_byte;
 `endif
