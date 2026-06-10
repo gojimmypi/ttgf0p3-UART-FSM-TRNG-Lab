@@ -135,7 +135,9 @@ async def test_version_command_or_absent(dut):
     await Timer(100, unit="ns")
     dut.rst_n.value = 1
 
-    await Timer(1000, unit="ns")
+    # Gate-level simulation can leave outputs as X until reset has settled
+    # through the synthesized netlist and a few clocks have completed.
+    await Timer(100_000, unit="ns")
     await Timer(SETTLE_TIME_NS, unit="ns")
 
     tx_idle = get_uart_tx_bit(dut)
