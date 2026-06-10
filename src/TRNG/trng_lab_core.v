@@ -240,20 +240,19 @@ module trng_lab_core
                 reg_rawlo    <= 8'h00;
                 reg_rawhi    <= 8'h00;
             end else begin
-            do_sample_q <= (trng_enable && sample_tick) || trng_step_pulse;
+                do_sample_q <= (trng_enable && sample_tick) || trng_step_pulse;
 
-            if (do_sample_q) begin
-                sample_ctr   <= 16'h0000;
-                lfsr         <= {lfsr[14:0], lfsr_next_bit};
-                sample_shift <= {sample_shift[14:0], selected_bit};
-                reg_rawlo    <= {sample_shift[6:0], selected_bit};
-                reg_rawhi    <= sample_shift[14:7];
-            end else if (trng_enable) begin
-                sample_ctr <= sample_ctr + 16'h0001;
-            end else begin
-                sample_ctr <= 16'h0000;
-            end /* do_sample_q */
-
+                if (do_sample_q) begin
+                    sample_ctr   <= 16'h0000;
+                    lfsr         <= {lfsr[14:0], lfsr_next_bit};
+                    sample_shift <= {sample_shift[14:0], selected_bit};
+                    reg_rawlo    <= {sample_shift[6:0], selected_bit};
+                    reg_rawhi    <= sample_shift[14:7];
+                end else if (trng_enable) begin
+                    sample_ctr <= sample_ctr + 16'h0001;
+                end else begin
+                    sample_ctr <= 16'h0000;
+                end /* do_sample_q */
             end /* trng_reset */
         end /* !rst_n */
     end /* always @(posedge clk */
