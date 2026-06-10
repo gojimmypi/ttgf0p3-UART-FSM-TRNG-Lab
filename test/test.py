@@ -141,6 +141,7 @@ async def test_version_command_or_absent(dut):
     tx_idle = get_uart_tx_bit(dut)
     assert tx_idle == 1, f"UART TX should idle high after reset, got {tx_idle}"
 
+    # Start receive before transmit so fast gate-level responses are not missed.
     recv_task = cocotb.start_soon(
         uart_recv_until_timeout(dut, max_bytes=64, idle_timeout_bits=200)
     )
