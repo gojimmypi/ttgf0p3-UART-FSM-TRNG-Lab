@@ -27,6 +27,12 @@ At a high level:
 - 
 The raw output is intended for experimentation and characterization. It is not a certified cryptographic random number generator.
 
+Development will continue beyond Tiny Tapeout submission deadline. For future updates, visit:
+
+https://gojimmypi.github.io/trng/
+
+https://gojimmypi.github.io/tinytapeout/
+
 ---
 
 ## External Hardware
