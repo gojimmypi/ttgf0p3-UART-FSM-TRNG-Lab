@@ -37,3 +37,6 @@ Version 0.1.7
 - https://github.com/TinyTapeout/tinytapeout_www/pull/230
 - https://github.com/TinyTapeout/tinytapeout_www/pull/231
 - Create timeout PR. See https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab/actions/runs/27152683035
+- Create Demoboard script examples. See https://discord.com/channels/1009193568256135208/1011201396659474432/1512868833503875093
+- Address my 60C/85C feature request https://github.com/TinyTapeout/tt-gds-action/issues/49
+
