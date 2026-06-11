@@ -20,12 +20,14 @@
  * - Single-nibble write commands: Ex, Sx, Vx, Wx followed by CR
  * - Two-nibble write commands: Dxxy, Mxy, Oxy followed by CR
  * - Register reads: Rx followed by CR, where x is 0..7
+ * - Binary raw stream: Bxy followed by CR, where xy is 01..FF bytes
  * - Version query: V followed by CR
  *
  * Example transactions:
  * - E1<CR>     : set enable bit
  * - D10<CR>    : set divider register to 0x10
  * - R6<CR>     : read register 6, replies R6=hh<CR>
+ * - B10<CR>    : stream 16 raw binary bytes from R6/R7
  * - V<CR>      : replies Version 1.2.0 4/23/2026<CR>
  *
  * Reply format:
@@ -93,6 +95,10 @@ module trng_cfg_ascii_core
     localparam [4:0] ST_Q_ERR      = 5'd12;
     localparam [4:0] ST_WAIT_SEND  = 5'd13;
 
+`ifdef TRNG_BINARY_STREAM
+    localparam [4:0] ST_Q_BIN      = 5'd15;
+`endif
+
 `ifdef USE_LONG_STRINGS
     localparam [4:0] ST_Q_STR      = 5'd14;
     localparam integer                   VERSION_LEN = `VERSION_STRING_LEN; /* Must be defined if USE_LONG_STRINGS is defined.  See project.v */
@@ -114,6 +120,11 @@ module trng_cfg_ascii_core
     reg       need_two_digits;
     reg [2:0] read_addr;
     reg [7:0] reply_value;
+
+`ifdef TRNG_BINARY_STREAM
+    reg [7:0] stream_count;
+    reg       stream_hi;
+`endif
 
     /* This is a GDC linting hack */
     wire [3:0] decoded_hex;
@@ -361,6 +372,11 @@ module trng_cfg_ascii_core
             tx_byte               <= 8'h00;
             tx_start              <= 1'b0;
 
+        `ifdef TRNG_BINARY_STREAM
+            stream_count          <= 8'h00;
+            stream_hi             <= 1'b0;
+        `endif
+
         `ifdef USE_LONG_STRINGS
             active_str            <= {(8 * VERSION_LEN){1'b0}};
             str_index             <= 6'd0;
@@ -408,6 +424,9 @@ module trng_cfg_ascii_core
                             need_two_digits <= 1'b0;
                             state           <= ST_ARG1;
                         end else if ((rx_cmd == "D") || (rx_cmd == "d") ||
+                            `ifdef TRNG_BINARY_STREAM
+                                     (rx_cmd == "B") || (rx_cmd == "b") ||
+                            `endif
                                      (rx_cmd == "M") || (rx_cmd == "m") ||
                                      (rx_cmd == "O") || (rx_cmd == "o")) begin
                             cmd             <= rx_cmd;
@@ -426,6 +445,9 @@ module trng_cfg_ascii_core
                             need_two_digits <= 1'b0;
                             state           <= ST_ARG1;
                         end else if ((rx_cmd == "D") ||
+                            `ifdef TRNG_BINARY_STREAM
+                                     (rx_cmd == "B") ||
+                            `endif                                     
                                      (rx_cmd == "M") ||
                                      (rx_cmd == "O")) begin
                             cmd             <= rx_cmd;
@@ -524,6 +546,24 @@ module trng_cfg_ascii_core
 `endif
                                 reply_value <= read_reg(read_addr);
                                 state <= ST_Q_R;
+
+`ifdef TRNG_BINARY_STREAM
+
+    `ifdef CASE_INSENSITIVE_ALT
+                            end else if ((cmd == "B") || (cmd == "b")) begin
+    `else
+                            end else if (cmd == "B") begin
+    `endif /* CASE_INSENSITIVE_ALT */
+
+                                if ({hex1, hex2} != 8'h00) begin
+                                    stream_count <= {hex1, hex2};
+                                    stream_hi    <= 1'b0;
+                                    state        <= ST_Q_BIN;
+                                end else begin
+                                    state <= ST_Q_ERR;
+                                end
+`endif /* TRNG_BINARY_STREAM */
+
                             end else begin
                                 if (need_two_digits) begin
                                     do_write(cmd, {hex1, hex2});
@@ -636,6 +676,28 @@ module trng_cfg_ascii_core
             `else
                 /* no long strings */
             `endif
+
+            /* Optional TRNG Binary Stream feature for ST_Q_BIN state */
+            `ifdef TRNG_BINARY_STREAM
+                ST_Q_BIN: begin
+                    if (!queued_tx_valid && !tx_busy) begin
+                        if (stream_hi) begin
+                            queue_tx(reg_rawhi);
+                            stream_hi <= 1'b0;
+                        end else begin
+                            queue_tx(reg_rawlo);
+                            stream_hi <= 1'b1;
+                        end
+
+                        if (stream_count == 8'h01) begin
+                            stream_count <= 8'h00;
+                            state <= ST_IDLE;
+                        end else begin
+                            stream_count <= stream_count - 8'd1;
+                        end
+                    end
+                end
+            `endif /* TRNG_BINARY_STREAM */
 
                 /*
                  * Stay here until the queued byte has been accepted and the UART
