@@ -20,11 +20,19 @@ A host such as a PC, ESP32, or test script can send simple ASCII commands over U
 registers, control the oscillator network, and read back raw entropy samples.
 
 At a high level:
+
 - A bank of ring oscillators generates jitter-based entropy
 - A sampling clock (controlled by a divider) captures this behavior
 - Control and configuration are managed through memory-mapped registers
 - Data and status are read back over the same UART interface
 
+Why? NIST notes that random numbers are essential for cryptographic and security applications, and that cryptography 
+makes extensive use of random numbers and random bits, particularly for generating cryptographic keying material.
+
+See presentations:
+
+- [NIST Standards on Random Bit Generation](https://csrc.nist.gov/csrc/media/Presentations/2023/overview-of-nist-rng-standards-90a-90b-90c-22/images-media/session-1-turan-overview-talk.pdf) slides. 
+- [Why Random Numbers for Cryptography?](https://csrc.nist.gov/csrc/media/events/random-number-generation-workshop-2004/documents/developmenthistory.pdf)
 
 Development will continue beyond Tiny Tapeout submission deadline. For future updates, visit:
 
@@ -116,8 +124,15 @@ Send the appropriate commands to configure and read from the TRNG core. See Regi
 
 ### NIST Validation
 
+[NIST](https://www.nist.gov/) has a [Resource for Random Bit Generation](https://csrc.nist.gov/Projects/random-bit-generation) testing:
+
+[![pic](./NIST-random-number-generation.jpg)](https://csrc.nist.gov/Projects/random-bit-generation)
+
+_Image credit: screen snip from [csrc.nist.gov/Projects/random-bit-generation](https://csrc.nist.gov/Projects/random-bit-generation)_
+
 See the [`capture_trng_raw_uart.py`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/test-hw/capture_trng_raw_uart.py) 
-script to capture a binary file of random data, large enough for 100 runs of 1,000,000-bit [NIST-style tests](https://csrc.nist.gov/projects/random-bit-generation/documentation-and-software):
+script to capture a binary file of random data from this project, large enough for 100 runs of 1,000,000-bit 
+[NIST-style tests](https://csrc.nist.gov/projects/random-bit-generation/documentation-and-software):
 
 ```
 ./capture_trng_raw_uart.py  --port /dev/ttyS12  --bytes 16777216  --out trng_raw.bin
@@ -146,6 +161,8 @@ cd NIST-Statistical-Test-Suite
 cd sts
 make
 ```
+
+For further testing information see [NIST Random Bit Generation RBG - Guide to the Statistical Tests](https://csrc.nist.gov/projects/random-bit-generation/documentation-and-software/guide-to-the-statistical-tests).
 
 ### Quickstart Simulation
 
