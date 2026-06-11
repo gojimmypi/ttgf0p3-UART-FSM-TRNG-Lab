@@ -26,17 +26,6 @@ At a high level:
 - Data and status are read back over the same UART interface
 
 
-See the [`capture_trng_raw_uart.py`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/test-hw/capture_trng_raw_uart.py) 
-script to capture a binary file of random data, large enough for 100 runs of 1,000,000-bit [NIST-style tests](https://csrc.nist.gov/projects/random-bit-generation/documentation-and-software):
-
-```
-./capture_trng_raw_uart.py  --port /dev/ttyS12  --bytes 16777216  --out trng_raw.bin
-```
-
-This script requires a build with `TRNG_BINARY_STREAM` enabled.
-
-The raw output is intended for experimentation and characterization. It is not a certified cryptographic random number generator.
-
 Development will continue beyond Tiny Tapeout submission deadline. For future updates, visit:
 
 https://gojimmypi.github.io/trng/
@@ -124,6 +113,39 @@ Although there are case-insensitive settings available for local builds, they ha
 for TT ASIC due to increased slew and setup violations.
 
 Send the appropriate commands to configure and read from the TRNG core. See Register Overview, below.
+
+### NIST Validation
+
+See the [`capture_trng_raw_uart.py`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/test-hw/capture_trng_raw_uart.py) 
+script to capture a binary file of random data, large enough for 100 runs of 1,000,000-bit [NIST-style tests](https://csrc.nist.gov/projects/random-bit-generation/documentation-and-software):
+
+```
+./capture_trng_raw_uart.py  --port /dev/ttyS12  --bytes 16777216  --out trng_raw.bin
+```
+
+This script requires a build with `TRNG_BINARY_STREAM` enabled.
+
+The raw output is intended for experimentation and characterization. It is not a certified cryptographic random number generator.
+
+See also:
+
+```
+# The official STS package from NIST CSRC:
+# https://csrc.nist.gov/CSRC/media/Projects/Random-Bit-Generation/documents/sts-2_1_2.zip
+
+unzip sts-2_1_2.zip
+cd sts-2.1.2
+make
+
+# 
+# or this UNOFFICIAL mirror:
+# https://github.com/terrillmoore/NIST-Statistical-Test-Suite.git
+
+cd NIST-Statistical-Test-Suite
+./setup.sh
+cd sts
+make
+```
 
 ### Quickstart Simulation
 
