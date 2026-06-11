@@ -142,6 +142,17 @@ This script requires a build with `TRNG_BINARY_STREAM` enabled.
 
 The raw output is intended for experimentation and characterization. It is not a certified cryptographic random number generator.
 
+When the optional `define TRNG_CONDITIONED_STREAM` is used in `project_config.v`, 
+the conditioned output can be generated with the `--conditioned` option:
+```
+./capture_trng_raw_uart.py \
+    --port /dev/ttyS12 \
+    --bytes 16777216 \
+    --out trng_conditioned.bin \
+    --fast-baud \
+    --conditioned
+```
+
 See also:
 
 ```

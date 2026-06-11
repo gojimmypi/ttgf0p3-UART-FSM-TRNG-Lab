@@ -91,13 +91,14 @@ def configure_trng(ser):
         send_ascii_cmd(ser, cmd, b"OK\r")
 
 
-def capture_binary_stream(ser, byte_count, out_path):
+def capture_binary_stream(ser, byte_count, out_path, conditioned):
     remaining = byte_count
+    stream_cmd = "C" if conditioned else "B"
 
     with open(out_path, "wb") as f:
         while remaining:
             chunk_len = min(remaining, 255)
-            cmd = f"B{chunk_len:02X}\r".encode("ascii")
+            cmd = f"{stream_cmd}{chunk_len:02X}\r".encode("ascii")
 
             write_cmd(ser, cmd)
 
@@ -113,6 +114,8 @@ def main():
     parser.add_argument("--baud", type=int, default=DEFAULT_BAUD)
     parser.add_argument("--fast-baud", action="store_true",
                         help="switch to 921600 baud during binary capture using U3")
+    parser.add_argument("--conditioned", action="store_true",
+                        help="capture conditioned stream using Cxx instead of raw Bxx")
     parser.add_argument("--bytes", type=int, default=1024)
     parser.add_argument("--out", required=True)
     parser.add_argument("--timeout", type=float, default=2.0)
@@ -138,7 +141,7 @@ def main():
                 set_uart_baud(ser, 3, FAST_BAUD)
                 fast_baud_active = True
 
-            capture_binary_stream(ser, args.bytes, args.out)
+            capture_binary_stream(ser, args.bytes, args.out, args.conditioned)
 
         finally:
             if fast_baud_active:

@@ -67,7 +67,7 @@
     `define SPI_REG_ACCESS
     `define TRNG_ENABLED
     `define TRNG_BINARY_STREAM
-    // `define TRNG_CONDITIONED_STREAM
+    `define TRNG_CONDITIONED_STREAM
     // `define JTAG_ENABLED
 
     /* Note that with all UART_ENABLED, SPI_ENABLED, SPI_REG_ACCESS, TRNG_ENABLED, JTAG_ENABLED
