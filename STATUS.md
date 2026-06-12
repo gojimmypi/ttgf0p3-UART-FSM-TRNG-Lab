@@ -23,6 +23,9 @@ Version 0.1.7
 ## TODO
 
 - Final submission version check
+- `CLOCK_PERIOD` at 20 or 40 ns? 
+- Decide on JTAG state
+- Check For safe JTAG default ui_in[4] = 1 , consider dip switches
 - Review IO pin documentation vs code
 - Check for stray TODO text
 - sample scripts should have generic `PROJECT` variable instead of hardcoding `ttgf-UART-FSM-TRNG-Lab`.
