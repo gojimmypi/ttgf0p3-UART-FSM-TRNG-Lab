@@ -106,16 +106,16 @@ module uart_trng_ascii_core
 
     /* Boilerplate parameter checking */
     generate
-        if (UART_DIV_115200 == 32'd0) begin : gen_bad_clock_hz
+        if (UART_DIV_115200 == 32'd0) begin : gen_bad_uart_div_115200
             PROJECT_MUST_NOT_USE_ZERO_UART_DIV_115200 u_stop ();
         end
-        if (UART_DIV_230400 == 32'd0) begin : gen_bad_clock_hz
+        if (UART_DIV_230400 == 32'd0) begin : gen_bad_uart_div_230400
             PROJECT_MUST_NOT_USE_ZERO_UART_DIV_230400 u_stop ();
         end
-        if (UART_DIV_460800 == 32'd0) begin : gen_bad_clock_hz
+        if (UART_DIV_460800 == 32'd0) begin : gen_bad_uart_div_460800
             PROJECT_MUST_NOT_USE_ZERO_UART_DIV_460800 u_stop ();
         end
-        if (UART_DIV_921600 == 32'd0) begin : gen_bad_clock_hz
+        if (UART_DIV_921600 == 32'd0) begin : gen_bad_uart_div_921600
             PROJECT_MUST_NOT_USE_ZERO_UART_DIV_921600 u_stop ();
         end
 
