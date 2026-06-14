@@ -11,13 +11,14 @@ BITS_PER_STREAM=1048576
 RUNS=2
 STREAMS_PER_RUN=16
 USE_FAST_BAUD="${USE_FAST_BAUD:-1}"
-CAPTURE_PROGRESS="${CAPTURE_PROGRESS:-0}"
-VERBOSE_CLEANUP="${VERBOSE_CLEANUP:-0}"
+CAPTURE_PROGRESS="${CAPTURE_PROGRESS:-1}"
+CAPTURE_PROGRESS_INTERVAL="${CAPTURE_PROGRESS_INTERVAL:-5}"
+VERBOSE_CLEANUP="${VERBOSE_CLEANUP:-1}"
 
 set -euo pipefail
 
 usage() {
-    cat <<EOF
+    cat <<EOF_USAGE
 Usage:
   $0 [capture_file_base]
 
@@ -25,7 +26,9 @@ Examples:
   $0
   $0 trng_conditioned_2MiB
   $0 trng_conditioned_2MiB.bin
-  USE_FAST_BAUD=1 $0 trng_conditioned_2MiB
+  USE_FAST_BAUD=0 $0 trng_conditioned_2MiB
+  CAPTURE_PROGRESS=1 $0 trng_conditioned_2MiB
+  VERBOSE_CLEANUP=1 $0 trng_conditioned_2MiB
 
 Arguments:
   capture_file_base
@@ -43,6 +46,19 @@ Environment:
       Set to 0 to remove --fast-baud from capture_trng_raw_uart.py.
       Default: 1
 
+  CAPTURE_PROGRESS
+      Set to 1 to pass --progress to capture_trng_raw_uart.py.
+      Default: 0
+
+  CAPTURE_PROGRESS_INTERVAL
+      Progress update interval in seconds when CAPTURE_PROGRESS=1.
+      Positive integer only.
+      Default: 5
+
+  VERBOSE_CLEANUP
+      Set to 1 to show before/after STS cleanup directory counts.
+      Default: 0
+
 Output:
   Captures:
       <capture_file_base>.1.bin
@@ -51,7 +67,7 @@ Output:
   STS results:
       ../../sts-2.1.2/experiments/AlgorithmTesting.1
       ../../sts-2.1.2/experiments/AlgorithmTesting.2
-EOF
+EOF_USAGE
 } # usage()
 
 if [ "$#" -gt 1 ]; then
@@ -87,6 +103,36 @@ case "$USE_FAST_BAUD" in
         ;;
 esac
 
+case "$CAPTURE_PROGRESS" in
+    0|1)
+        ;;
+    *)
+        echo "ERROR: CAPTURE_PROGRESS must be 0 or 1."
+        exit 2
+        ;;
+esac
+
+case "$VERBOSE_CLEANUP" in
+    0|1)
+        ;;
+    *)
+        echo "ERROR: VERBOSE_CLEANUP must be 0 or 1."
+        exit 2
+        ;;
+esac
+
+case "$CAPTURE_PROGRESS_INTERVAL" in
+    ''|*[!0-9]*)
+        echo "ERROR: CAPTURE_PROGRESS_INTERVAL must be a positive integer."
+        exit 2
+        ;;
+esac
+
+if [ "$CAPTURE_PROGRESS_INTERVAL" -le 0 ]; then
+    echo "ERROR: CAPTURE_PROGRESS_INTERVAL must be greater than 0."
+    exit 2
+fi
+
 # Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:
 MY_SHELLCHECK="shellcheck"
@@ -101,12 +147,12 @@ fi
 
 TEST_HW_DIR="$(pwd)"
 STS_DIR="$(cd ../../sts-2.1.2 && pwd)"
-RESULTS_PARENT_DIR="$STS_DIR/experiments"
+RESULTS_PARENT_DIR="$(cd "$STS_DIR/experiments" && pwd)"
 RESULTS_DIR="$RESULTS_PARENT_DIR/AlgorithmTesting"
 WORK_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/nist_sts_parallel.XXXXXXXXXX")"
 
 cleanup() {
-    rm -rf "$WORK_ROOT"
+    rm -rf -- "$WORK_ROOT"
 }
 
 trap cleanup EXIT
@@ -124,10 +170,6 @@ fi
 if [ ! -d "$RESULTS_DIR" ]; then
     echo "Missing STS results directory: $RESULTS_DIR"
     exit 1
-fi
-
-if [ "$CAPTURE_PROGRESS" -eq 1 ]; then
-    capture_args+=(--progress)
 fi
 
 list_results_dir() {
@@ -187,6 +229,7 @@ safe_rm_run_results_dir() {
     local dir="$1"
     local base
     local parent
+    local suffix
 
     if [ -z "$dir" ]; then
         echo "ERROR: refusing to remove empty path"
@@ -204,9 +247,18 @@ safe_rm_run_results_dir() {
     fi
 
     case "$base" in
-        AlgorithmTesting.[0-9]*)
+        AlgorithmTesting.*)
             ;;
         *)
+            echo "ERROR: refusing to remove unexpected results directory: $dir"
+            exit 1
+            ;;
+    esac
+
+    suffix="${base#AlgorithmTesting.}"
+
+    case "$suffix" in
+        ''|*[!0-9]*)
             echo "ERROR: refusing to remove unexpected results directory: $dir"
             exit 1
             ;;
@@ -293,12 +345,16 @@ EOF_ASSESS
     fi
 
     return "$assess_rc"
-} # Run assess
+} # run_assess()
 
 capture_args=(--port "$PORT" --bytes "$BYTES" --conditioned)
 
 if [ "$USE_FAST_BAUD" -eq 1 ]; then
     capture_args+=(--fast-baud)
+fi
+
+if [ "$CAPTURE_PROGRESS" -eq 1 ]; then
+    capture_args+=(--progress --progress-interval "$CAPTURE_PROGRESS_INTERVAL")
 fi
 
 echo "Capture file base: $THE_FILE_BASE"
@@ -309,6 +365,11 @@ echo "Runs: $RUNS"
 echo "Bits per stream: $BITS_PER_STREAM"
 echo "Streams per run: $STREAMS_PER_RUN"
 echo "Fast baud: $USE_FAST_BAUD"
+echo "Capture progress: $CAPTURE_PROGRESS"
+if [ "$CAPTURE_PROGRESS" -eq 1 ]; then
+    echo "Capture progress interval: $CAPTURE_PROGRESS_INTERVAL"
+fi
+echo "Verbose cleanup: $VERBOSE_CLEANUP"
 echo
 
 ./show_effective_defines.sh
@@ -332,17 +393,24 @@ for x in $(seq 1 "$RUNS"); do
     ./capture_trng_raw_uart.py \
         "${capture_args[@]}" \
         --out "$capture_file"
-        --progress \
-        --progress-interval 5
 
-    # Sanity check on the file just captured:
-    python3 - "$capture_file" <<'EOF'
+    # Sanity check on the file just captured.
+    python3 - "$capture_file" <<'EOF_PYTHON'
 import math
 import sys
 from collections import Counter
 
 path = sys.argv[1]
-data = open(path, "rb").read()
+
+with open(path, "rb") as f:
+    data = f.read()
+
+if not data:
+    print(f"Capture sanity: {path}")
+    print("  bytes: 0")
+    print("  ERROR: captured file is empty")
+    sys.exit(1)
+
 ones = sum(byte.bit_count() for byte in data)
 bits = len(data) * 8
 counts = Counter(data)
@@ -353,7 +421,7 @@ print(f"  bytes: {len(data)}")
 print(f"  one_ratio: {ones / bits:.9f}")
 print(f"  unique_byte_values: {len(counts)}")
 print(f"  byte_entropy: {entropy:.6f} bits/byte")
-EOF
+EOF_PYTHON
 
 done
 
