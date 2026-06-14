@@ -10,8 +10,7 @@ BYTES=2097152
 BITS_PER_STREAM=1048576
 RUNS=2
 STREAMS_PER_RUN=16
-# USE_FAST_BAUD="${USE_FAST_BAUD:-0}"
-USE_FAST_BAUD=1
+USE_FAST_BAUD="${USE_FAST_BAUD:-1}"
 
 set -euo pipefail
 
@@ -39,8 +38,8 @@ Environment:
       Default: /dev/ttyS12
 
   USE_FAST_BAUD
-      Set to 1 to add --fast-baud to capture_trng_raw_uart.py.
-      Default: 0
+      Set to 0 to remove --fast-baud from capture_trng_raw_uart.py.
+      Default: 1
 
 Output:
   Captures:
@@ -278,6 +277,27 @@ for x in $(seq 1 "$RUNS"); do
     ./capture_trng_raw_uart.py \
         "${capture_args[@]}" \
         --out "$capture_file"
+
+    # Sanity check on the file just captured:
+    python3 - "$capture_file" <<'EOF'
+import math
+import sys
+from collections import Counter
+
+path = sys.argv[1]
+data = open(path, "rb").read()
+ones = sum(byte.bit_count() for byte in data)
+bits = len(data) * 8
+counts = Counter(data)
+entropy = -sum((n / len(data)) * math.log2(n / len(data)) for n in counts.values())
+
+print(f"Capture sanity: {path}")
+print(f"  bytes: {len(data)}")
+print(f"  one_ratio: {ones / bits:.9f}")
+print(f"  unique_byte_values: {len(counts)}")
+print(f"  byte_entropy: {entropy:.6f} bits/byte")
+EOF
+
 done
 
 pids=()
