@@ -11,6 +11,8 @@ BITS_PER_STREAM=1048576
 RUNS=2
 STREAMS_PER_RUN=16
 USE_FAST_BAUD="${USE_FAST_BAUD:-1}"
+CAPTURE_PROGRESS="${CAPTURE_PROGRESS:-0}"
+VERBOSE_CLEANUP="${VERBOSE_CLEANUP:-0}"
 
 set -euo pipefail
 
@@ -124,6 +126,10 @@ if [ ! -d "$RESULTS_DIR" ]; then
     exit 1
 fi
 
+if [ "$CAPTURE_PROGRESS" -eq 1 ]; then
+    capture_args+=(--progress)
+fi
+
 list_results_dir() {
     local dir="$1"
     local count
@@ -177,6 +183,45 @@ make_worker_dir() {
     cp -a "$RESULTS_DIR" "$worker_dir/experiments/AlgorithmTesting"
 }
 
+safe_rm_run_results_dir() {
+    local dir="$1"
+    local base
+    local parent
+
+    if [ -z "$dir" ]; then
+        echo "ERROR: refusing to remove empty path"
+        exit 1
+    fi
+
+    base="$(basename "$dir")"
+    parent="$(cd "$(dirname "$dir")" && pwd)"
+
+    if [ "$parent" != "$RESULTS_PARENT_DIR" ]; then
+        echo "ERROR: refusing to remove path outside results parent: $dir"
+        echo "Expected parent: $RESULTS_PARENT_DIR"
+        echo "Actual parent:   $parent"
+        exit 1
+    fi
+
+    case "$base" in
+        AlgorithmTesting.[0-9]*)
+            ;;
+        *)
+            echo "ERROR: refusing to remove unexpected results directory: $dir"
+            exit 1
+            ;;
+    esac
+
+    case "$dir" in
+        /|/tmp|/tmp/|/mnt|/mnt/|/mnt/c|/mnt/c/|"$RESULTS_PARENT_DIR")
+            echo "ERROR: refusing to remove unsafe path: $dir"
+            exit 1
+            ;;
+    esac
+
+    rm -rf -- "$dir"
+}
+
 run_assess() {
     local x="$1"
     local capture_file="$2"
@@ -195,19 +240,29 @@ run_assess() {
 
     cd "$worker_dir"
 
-    echo "Deleting old saved STS results directory for run $x"
-    echo "Before rm -rf $run_results_dir:"
-    list_results_dir "$run_results_dir"
-    rm -rf "$run_results_dir"
-    echo "After rm -rf $run_results_dir:"
-    list_results_dir "$run_results_dir"
+    echo "Resetting STS results for run $x"
 
-    echo "Initializing worker STS results directory for run $x"
-    echo "Before reset_results_dir $worker_results_dir:"
-    list_results_dir "$worker_results_dir"
+    if [ "$VERBOSE_CLEANUP" -eq 1 ]; then
+        echo "Before rm -rf $run_results_dir:"
+        list_results_dir "$run_results_dir"
+    fi
+
+    safe_rm_run_results_dir "$run_results_dir"
+
+    if [ "$VERBOSE_CLEANUP" -eq 1 ]; then
+        echo "After rm -rf $run_results_dir:"
+        list_results_dir "$run_results_dir"
+
+        echo "Before reset_results_dir $worker_results_dir:"
+        list_results_dir "$worker_results_dir"
+    fi
+
     reset_results_dir "$worker_results_dir"
-    echo "After reset_results_dir $worker_results_dir:"
-    list_results_dir "$worker_results_dir"
+
+    if [ "$VERBOSE_CLEANUP" -eq 1 ]; then
+        echo "After reset_results_dir $worker_results_dir:"
+        list_results_dir "$worker_results_dir"
+    fi
 
     echo "Checking file $capture_file"
 
@@ -277,6 +332,8 @@ for x in $(seq 1 "$RUNS"); do
     ./capture_trng_raw_uart.py \
         "${capture_args[@]}" \
         --out "$capture_file"
+        --progress \
+        --progress-interval 5
 
     # Sanity check on the file just captured:
     python3 - "$capture_file" <<'EOF'

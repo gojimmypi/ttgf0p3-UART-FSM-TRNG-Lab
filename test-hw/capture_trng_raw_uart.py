@@ -30,6 +30,7 @@ import serial
 DEFAULT_BAUD = 115200
 FAST_BAUD = 921600
 SHORT_TIMEOUT = 0.25
+DEFAULT_PROGRESS_INTERVAL = 2.0
 
 
 def write_cmd(ser, cmd):
@@ -180,8 +181,18 @@ def configure_trng(ser):
     #     send_ascii_cmd(ser, cmd, b"OK\r")
 
 
-def capture_binary_stream(ser, byte_count, out_path, conditioned, timeout_retries):
+def capture_binary_stream(
+    ser,
+    byte_count,
+    out_path,
+    conditioned,
+    timeout_retries,
+    progress,
+    progress_interval,
+):
     remaining = byte_count
+    total = 0
+    last_report = time.monotonic()
     stream_cmd = "C" if conditioned else "B"
 
     with open(out_path, "wb") as f:
@@ -194,7 +205,14 @@ def capture_binary_stream(ser, byte_count, out_path, conditioned, timeout_retrie
             data = read_exact(ser, chunk_len, timeout_retries)
             f.write(data)
 
+            total += len(data)
             remaining -= chunk_len
+
+            if progress:
+                now = time.monotonic()
+                if now - last_report >= progress_interval or remaining == 0:
+                    print(f"Captured {total} of {byte_count} bytes...")
+                    last_report = now
 
 
 def remove_file_quietly(path):
@@ -233,6 +251,8 @@ def capture_with_retries(ser, args):
                 out_tmp,
                 args.conditioned,
                 args.read_timeout_retries,
+                args.progress,
+                args.progress_interval,
             )
             os.replace(out_tmp, args.out)
             return fast_baud_active
@@ -278,6 +298,20 @@ def main():
         help="retry the whole capture from byte zero after a timeout",
     )
     parser.add_argument(
+        "--progress",
+        action="store_true",
+        help="print periodic capture progress without changing UART behavior",
+    )
+    parser.add_argument(
+        "--progress-interval",
+        type=float,
+        default=DEFAULT_PROGRESS_INTERVAL,
+        help=(
+            "seconds between progress messages when --progress is enabled. "
+            f"Default: {DEFAULT_PROGRESS_INTERVAL}"
+        ),
+    )
+    parser.add_argument(
         "--no-baud-recovery",
         action="store_true",
         help="do not try to recover if target was left at fast baud",
@@ -294,6 +328,10 @@ def main():
 
     if args.capture_retries < 1:
         print("error: --capture-retries must be at least 1", file=sys.stderr)
+        return 1
+
+    if args.progress_interval <= 0.0:
+        print("error: --progress-interval must be greater than 0", file=sys.stderr)
         return 1
 
     original_baud = args.baud
