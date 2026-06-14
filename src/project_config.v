@@ -139,7 +139,7 @@
 
     /*
      * --------------------------------------------------------------------------------------------
-     * Optional 64 bit Galois whitening conditioner: TRNG_CONDITIONED_STREAM_GALOIS
+     * Optional 64 bit Galois whitening conditioner: TRNG_CONDITIONED_STREAM_GALOIS_64
      * --------------------------------------------------------------------------------------------
      * Too large for 1x2. See #218 https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab/actions/runs/27445643164
      */
@@ -170,7 +170,7 @@
 
         /* FPGA only: A practical lightweight candidate is a xoshiro-style 128-bit PRNG. 
          * It is not cryptographic, but it is much more likely to pass STS than the current 16-bit LFSR tap source */
-        `define FPGA_NIST_PRNG_SOURCE
+        //`define FPGA_NIST_PRNG_SOURCE
     
     `elsif IS_MY_IVERILOG_SIMULATION 
         /* This is used by the [project]/test/my_test.sh simulation test script */

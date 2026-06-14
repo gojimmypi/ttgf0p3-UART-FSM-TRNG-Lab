@@ -29,15 +29,15 @@
  * - E1<CR>     : set enable bit
  * - D10<CR>    : set divider register to 0x10
  * - R6<CR>     : read register 6, replies R6=hh<CR>
- * - B10<CR>    : stream 16 raw binary bytes from R6/R7
- * - C10<CR>    : stream 16 conditioned binary bytes if TRNG_CONDITIONED_STREAM is enabled
- * - U3<CR>     : select 921600 UART baud after OK<CR> completes
- * - V<CR>      : replies Version 1.2.0 4/23/2026<CR>
+ * - Bxy<CR>    : stream xy raw bytes, waiting for a fresh TRNG sample before each byte.
+ * - Cxy<CR>    : Cxy: stream xy conditioned bytes, waiting for a fresh TRNG sample before each byte.
+ * - U3<CR>     : select 921600 UART baud after OK<CR> completes.
+ * - V<CR>      : replies Version 0.1.7j 6/12/2026<CR>
  *
  * Reply format:
  * - Successful write: OK<CR>
  * - Successful read : Rn=HH<CR>
- * - Version query   : Version 1.2.0 4/23/2026<CR>
+ * - Version query   : Version 0.1.7j 6/12/2026<CR>
  * - Parse/error     : ?<CR>
  */
 `default_nettype none
