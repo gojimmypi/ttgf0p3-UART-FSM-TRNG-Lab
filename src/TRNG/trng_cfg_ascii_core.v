@@ -17,21 +17,28 @@
  * - Generates ASCII replies using uart_tx_min.
  *
  * High-level command format:
- * - Single-nibble write commands: Ex, Sx, Vx, Wx followed by CR
+ * - Single-nibble write commands: Ex, Sx, Ux, Vx, Wx followed by CR
  * - Two-nibble write commands: Dxxy, Mxy, Oxy followed by CR
  * - Register reads: Rx followed by CR, where x is 0..7
+ * - Binary raw stream: Bxy followed by CR, where xy is 01..FF bytes
+ * - Conditioned binary stream: Cxy followed by CR, where xy is 01..FF bytes
+ *   when TRNG_CONDITIONED_STREAM is enabled
  * - Version query: V followed by CR
  *
  * Example transactions:
  * - E1<CR>     : set enable bit
  * - D10<CR>    : set divider register to 0x10
+ * - R5<CR>     : read status/health register, replies R5=hh<CR>
  * - R6<CR>     : read register 6, replies R6=hh<CR>
- * - V<CR>      : replies Version 1.2.0 4/23/2026<CR>
+ * - Bxy<CR>    : stream xy raw bytes, waiting for a fresh TRNG sample before each byte.
+ * - Cxy<CR>    : Cxy: stream xy conditioned bytes, waiting for a fresh TRNG sample before each byte.
+ * - U3<CR>     : select 921600 UART baud after OK<CR> completes.
+ * - V<CR>      : replies Version 1.0.0 6/14/2026<CR>
  *
  * Reply format:
  * - Successful write: OK<CR>
  * - Successful read : Rn=HH<CR>
- * - Version query   : Version 1.2.0 4/23/2026<CR>
+ * - Version query   : Version 1.0.0  6/14/2026<CR>
  * - Parse/error     : ?<CR>
  */
 `default_nettype none
@@ -52,6 +59,10 @@ module trng_cfg_ascii_core
     output reg        tx_start,
     input  wire       tx_busy,
 
+`ifdef ADJUSTABLE_BAUD_ENABLED
+    output reg  [1:0] uart_baud_sel,
+`endif 
+
     output reg  [7:0] reg_ctrl,
     output reg  [7:0] reg_src,
     output reg  [7:0] reg_div,
@@ -61,6 +72,26 @@ module trng_cfg_ascii_core
     input  wire [7:0] reg_status,
     input  wire [7:0] reg_rawlo,
     input  wire [7:0] reg_rawhi,
+
+`ifdef TRNG_BINARY_STREAM
+    input  wire [7:0] stream_sample_count,
+`endif
+
+`ifdef TRNG_CONDITIONED_STREAM
+    `ifdef TRNG_CONDITIONED_STREAM_64_XOR
+    input  wire [7:0] reg_cond0,
+    input  wire [7:0] reg_cond1,
+    input  wire [7:0] reg_cond2,
+    input  wire [7:0] reg_cond3,
+    input  wire [7:0] reg_cond4,
+    input  wire [7:0] reg_cond5,
+    input  wire [7:0] reg_cond6,
+    input  wire [7:0] reg_cond7,
+    `else
+    input  wire [7:0] reg_condlo,
+    input  wire [7:0] reg_condhi,
+    `endif /* !TRNG_CONDITIONED_STREAM_64_XOR */
+`endif /* TRNG_CONDITIONED_STREAM */
 
     input  wire       spi_reg_wr_en,
     input  wire [2:0] spi_reg_addr,
@@ -101,6 +132,11 @@ module trng_cfg_ascii_core
     /* Version string not implemented */
 `endif
 
+`ifdef TRNG_BINARY_STREAM
+    localparam [4:0] ST_Q_BIN      = 5'd15;
+    localparam [4:0] ST_Q_BIN_WAIT = 5'd16;
+`endif
+
     reg [4:0] state;
     reg [4:0] next_state_after_send;
 
@@ -114,6 +150,24 @@ module trng_cfg_ascii_core
     reg       need_two_digits;
     reg [2:0] read_addr;
     reg [7:0] reply_value;
+
+`ifdef ADJUSTABLE_BAUD_ENABLED
+    reg       pending_baud_valid;
+    reg [1:0] pending_baud_sel;
+`endif 
+
+`ifdef TRNG_BINARY_STREAM
+    reg [7:0] stream_count;
+    reg       stream_hi;
+    reg [7:0] stream_seen_sample_count;
+    reg [7:0] stream_byte;
+`ifdef TRNG_CONDITIONED_STREAM
+    reg       stream_conditioned;
+    `ifdef TRNG_CONDITIONED_STREAM_64_XOR
+    reg [2:0] stream_cond_index;
+    `endif
+`endif
+`endif
 
     /* This is a GDC linting hack */
     wire [3:0] decoded_hex;
@@ -200,6 +254,7 @@ module trng_cfg_ascii_core
      * Address map used by the Rn read command.
      * 0..4 are writable configuration registers.
      * 5..7 are read-only status/data registers coming back from the TRNG side.
+     * With TRNG_HEALTH_STATUS enabled, R5 bits 7..3 are health flags.
      */
     function [7:0] read_reg;
         input [2:0] addr;
@@ -217,6 +272,27 @@ module trng_cfg_ascii_core
             endcase
         end
     endfunction
+
+`ifdef TRNG_CONDITIONED_STREAM
+`ifdef TRNG_CONDITIONED_STREAM_64_XOR
+    function [7:0] read_cond_byte;
+        input [2:0] index;
+        begin
+            case (index)
+                3'd0: read_cond_byte = reg_cond0;
+                3'd1: read_cond_byte = reg_cond1;
+                3'd2: read_cond_byte = reg_cond2;
+                3'd3: read_cond_byte = reg_cond3;
+                3'd4: read_cond_byte = reg_cond4;
+                3'd5: read_cond_byte = reg_cond5;
+                3'd6: read_cond_byte = reg_cond6;
+                3'd7: read_cond_byte = reg_cond7;
+                default: read_cond_byte = reg_cond0;
+            endcase
+        end
+    endfunction
+`endif /* TRNG_CONDITIONED_STREAM_64_XOR */
+`endif
 
 `ifdef JTAG_ENABLED
     always @(*) begin
@@ -355,11 +431,29 @@ module trng_cfg_ascii_core
             need_two_digits       <= 1'b0;
             read_addr             <= 3'd0;
             reply_value           <= 8'h00;
+`ifdef ADJUSTABLE_BAUD_ENABLED
+            pending_baud_valid    <= 1'b0;
+            pending_baud_sel      <= 2'd0;
+`endif 
 
             queued_tx_byte        <= 8'h00;
             queued_tx_valid       <= 1'b0;
             tx_byte               <= 8'h00;
             tx_start              <= 1'b0;
+
+        `ifdef TRNG_BINARY_STREAM
+            stream_seen_sample_count <= 8'h00;
+            stream_byte              <= 8'h00;
+            
+            stream_count          <= 8'h00;
+            stream_hi             <= 1'b0;
+            `ifdef TRNG_CONDITIONED_STREAM
+            stream_conditioned    <= 1'b0;
+            `ifdef TRNG_CONDITIONED_STREAM_64_XOR
+                stream_cond_index     <= 3'd0;
+            `endif /* TRNG_CONDITIONED_STREAM_64_XOR */
+            `endif /* TRNG_CONDITIONED_STREAM */
+        `endif /* TRNG_BINARY_STREAM */
 
         `ifdef USE_LONG_STRINGS
             active_str            <= {(8 * VERSION_LEN){1'b0}};
@@ -369,7 +463,11 @@ module trng_cfg_ascii_core
             /* no long strings */
         `endif
 
+`ifdef ADJUSTABLE_BAUD_ENABLED
             /* Default power-on register values for bring-up. */
+            uart_baud_sel         <= 2'd0;
+`endif 
+
             reg_ctrl              <= 8'h00;
             reg_src               <= 8'h00;
             reg_div               <= 8'h10;
@@ -402,12 +500,21 @@ module trng_cfg_ascii_core
 `ifdef CASE_INSENSITIVE_ALT
                         end else if ((rx_cmd == "E") || (rx_cmd == "e") ||
                                      (rx_cmd == "S") || (rx_cmd == "s") ||
+                            `ifdef ADJUSTABLE_BAUD_ENABLED
+                                     (rx_cmd == "U") || (rx_cmd == "u") ||
+                            `endif 
                                      (rx_cmd == "V") || (rx_cmd == "v") ||
                                      (rx_cmd == "W") || (rx_cmd == "w")) begin
                             cmd             <= rx_cmd;
                             need_two_digits <= 1'b0;
                             state           <= ST_ARG1;
                         end else if ((rx_cmd == "D") || (rx_cmd == "d") ||
+                            `ifdef TRNG_BINARY_STREAM
+                                     (rx_cmd == "B") || (rx_cmd == "b") ||
+                                `ifdef TRNG_CONDITIONED_STREAM
+                                     (rx_cmd == "C") || (rx_cmd == "c") ||
+                                `endif
+                            `endif
                                      (rx_cmd == "M") || (rx_cmd == "m") ||
                                      (rx_cmd == "O") || (rx_cmd == "o")) begin
                             cmd             <= rx_cmd;
@@ -420,12 +527,21 @@ module trng_cfg_ascii_core
 `else
                         end else if ((rx_cmd == "E") ||
                                      (rx_cmd == "S") ||
+                            `ifdef ADJUSTABLE_BAUD_ENABLED
+                                     (rx_cmd == "U") ||
+                            `endif 
                                      (rx_cmd == "V") ||
                                      (rx_cmd == "W")) begin
                             cmd             <= rx_cmd;
                             need_two_digits <= 1'b0;
                             state           <= ST_ARG1;
                         end else if ((rx_cmd == "D") ||
+                            `ifdef TRNG_BINARY_STREAM
+                                     (rx_cmd == "B") ||
+                                `ifdef TRNG_CONDITIONED_STREAM
+                                     (rx_cmd == "C") ||
+                                `endif
+                            `endif                                     
                                      (rx_cmd == "M") ||
                                      (rx_cmd == "O")) begin
                             cmd             <= rx_cmd;
@@ -524,6 +640,60 @@ module trng_cfg_ascii_core
 `endif
                                 reply_value <= read_reg(read_addr);
                                 state <= ST_Q_R;
+
+`ifdef TRNG_BINARY_STREAM
+
+    `ifdef TRNG_CONDITIONED_STREAM
+        `ifdef CASE_INSENSITIVE_ALT
+                            end else if ((cmd == "B") || (cmd == "b") ||
+                                         (cmd == "C") || (cmd == "c")) begin
+        `else
+                            end else if ((cmd == "B") || (cmd == "C")) begin
+        `endif /* CASE_INSENSITIVE_ALT */
+    `else
+        `ifdef CASE_INSENSITIVE_ALT
+                            end else if ((cmd == "B") || (cmd == "b")) begin
+        `else
+                            end else if (cmd == "B") begin
+        `endif /* CASE_INSENSITIVE_ALT */
+    `endif /* TRNG_CONDITIONED_STREAM */
+
+                                if ({hex1, hex2} != 8'h00) begin
+                                    stream_count <= {hex1, hex2};
+                                    stream_hi    <= 1'b0;
+    `ifdef TRNG_CONDITIONED_STREAM
+                                `ifdef TRNG_CONDITIONED_STREAM_64_XOR
+                                    stream_cond_index <= 3'd0;
+                                `endif                
+        `ifdef CASE_INSENSITIVE_ALT
+                                    stream_conditioned <= (cmd == "C") || (cmd == "c");
+        `else
+                                    stream_conditioned <= (cmd == "C");
+        `endif /* CASE_INSENSITIVE_ALT */
+    `endif /* TRNG_CONDITIONED_STREAM */
+                                    stream_seen_sample_count <= stream_sample_count;
+                                    state                    <= ST_Q_BIN_WAIT;
+                                end else begin
+                                    state <= ST_Q_ERR;
+                                end
+`endif /* TRNG_BINARY_STREAM */
+
+`ifdef ADJUSTABLE_BAUD_ENABLED
+
+    `ifdef CASE_INSENSITIVE_ALT
+                            end else if ((cmd == "U") || (cmd == "u")) begin
+    `else
+                            end else if (cmd == "U") begin
+    `endif /* CASE_INSENSITIVE_ALT */
+                                if (hex1 < 4'd4) begin
+                                    pending_baud_valid <= 1'b1;
+                                    pending_baud_sel   <= hex1[1:0];
+                                    state              <= ST_Q_O;
+                                end else begin
+                                    state <= ST_Q_ERR;
+                                end
+`endif /* ADJUSTABLE_BAUD_ENABLED */
+
                             end else begin
                                 if (need_two_digits) begin
                                     do_write(cmd, {hex1, hex2});
@@ -637,6 +807,72 @@ module trng_cfg_ascii_core
                 /* no long strings */
             `endif
 
+            /* Optional TRNG Binary Stream feature for ST_Q_BIN state */
+            `ifdef TRNG_BINARY_STREAM
+                ST_Q_BIN_WAIT: begin
+                    if (stream_sample_count != stream_seen_sample_count) begin
+                        stream_seen_sample_count <= stream_sample_count;
+
+`ifdef TRNG_CONDITIONED_STREAM
+    `ifdef TRNG_CONDITIONED_STREAM_64_XOR
+                        if (stream_conditioned) begin
+                            stream_byte       <= read_cond_byte(stream_cond_index);
+                            stream_cond_index <= stream_cond_index + 3'd1;
+                        end else begin
+                            if (stream_hi) begin
+                                stream_byte <= reg_rawhi;
+                                stream_hi <= 1'b0;
+                            end else begin
+                                stream_byte <= reg_rawlo;
+                                stream_hi <= 1'b1;
+                            end
+                        end
+    `else
+                        if (stream_hi) begin
+                            if (stream_conditioned) begin
+                                stream_byte <= reg_condhi;
+                            end else begin
+                                stream_byte <= reg_rawhi;
+                            end
+                            stream_hi <= 1'b0;
+                        end else begin
+                            if (stream_conditioned) begin
+                                stream_byte <= reg_condlo;
+                            end else begin
+                                stream_byte <= reg_rawlo;
+                            end
+                            stream_hi <= 1'b1;
+                        end
+    `endif /* ! TRNG_CONDITIONED_STREAM_64_XOR */
+`else
+                        if (stream_hi) begin
+                            stream_byte <= reg_rawhi;
+                            stream_hi <= 1'b0;
+                        end else begin
+                            stream_byte <= reg_rawlo;
+                            stream_hi <= 1'b1;
+                        end
+`endif /* ! TRNG_CONDITIONED_STREAM */
+
+                        state <= ST_Q_BIN;
+                    end
+                end
+
+                ST_Q_BIN: begin
+                    if (!queued_tx_valid && !tx_busy) begin
+                        queue_tx(stream_byte);
+
+                        if (stream_count == 8'h01) begin
+                            stream_count <= 8'h00;
+                            state        <= ST_IDLE;
+                        end else begin
+                            stream_count <= stream_count - 8'd1;
+                            state        <= ST_Q_BIN_WAIT;
+                        end
+                    end
+                end
+            `endif /* TRNG_BINARY_STREAM */
+
                 /*
                  * Stay here until the queued byte has been accepted and the UART
                  * transmitter is no longer busy. Then continue with the next
@@ -644,6 +880,16 @@ module trng_cfg_ascii_core
                  */
                 ST_WAIT_SEND: begin
                     if (!queued_tx_valid && !tx_busy) begin
+
+            `ifdef ADJUSTABLE_BAUD_ENABLED
+                        if (next_state_after_send == ST_IDLE) begin
+                            if (pending_baud_valid) begin
+                                uart_baud_sel      <= pending_baud_sel;
+                                pending_baud_valid <= 1'b0;
+                            end
+                        end
+            `endif /* ADJUSTABLE_BAUD_ENABLED */
+
                         state <= next_state_after_send;
                     end
                 end

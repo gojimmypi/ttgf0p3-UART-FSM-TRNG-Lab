@@ -30,7 +30,7 @@ else
     echo "TT_PORT:      ${TT_PORT}"
 fi
 
-# Run shell check to ensure this a good script.
+# Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:
 MY_SHELLCHECK="shellcheck"
 
@@ -58,15 +58,15 @@ echo "**************************************************************************
 echo "**  Calling test scripts on port ${TT_UART_PORT}"
 echo "**************************************************************************"
 
-python ../test-hw/tt_ulx3s_uart_test.py --port "$TT_UART_PORT"                   || exit 1
+python ../test-hw/tt_uart_test.py --port "$TT_UART_PORT"                   || exit 1
 
-python ../test-hw/tt_ulx3s_uart_test.py --port "$TT_UART_PORT" --reset-registers || exit 1
+python ../test-hw/tt_uart_test.py --port "$TT_UART_PORT" --reset-registers || exit 1
 
-python ../test-hw/tt_ulx3s_trng_uart_test.py --port "$TT_UART_PORT"              || exit 1
+python ../test-hw/tt_trng_uart_test.py --port "$TT_UART_PORT"              || exit 1
 
-python ../test-hw/tt_ulx3s_trng_repro_test.py --port  "$TT_UART_PORT"            || exit 1
+python ../test-hw/tt_trng_repro_test.py --port  "$TT_UART_PORT"            || exit 1
 
-python ../test-hw/tt_ulx3s_uart_test.py --port "$TT_UART_PORT" --reset-registers || exit 1
+python ../test-hw/tt_uart_test.py --port "$TT_UART_PORT" --reset-registers || exit 1
 
 echo "**************************************************************************"
 echo "**  Done. Ports used:"

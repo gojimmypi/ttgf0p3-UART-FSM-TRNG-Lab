@@ -61,7 +61,7 @@
 
 PORT=/dev/ttyS12
 
-# Run shell check to ensure this a good script.
+# Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:
 MY_SHELLCHECK="shellcheck"
 
@@ -291,17 +291,22 @@ if [ "$IS_LOOPBACK" -eq 1 ]; then
     python ./loopback_test.py --port "$PORT" -b 115200 --bulk           || exit 1
     printf "Test bulk mode most challenging - complete.\n\n"
 else
-    # usage: tt_ulx3s_uart_test.py [-h] --port PORT [--baud BAUD] [--timeout TIMEOUT] [--idle-time IDLE_TIME]
+    # usage: tt_uart_test.py [-h] --port PORT [--baud BAUD] [--timeout TIMEOUT] [--idle-time IDLE_TIME]
     #                              [--repeat REPEAT] [--stop-on-fail]
     #                              [--reset-registers]
 
-    python ./tt_ulx3s_uart_test.py --port "$PORT"                   || exit 1
+    python ./tt_uart_test.py --port "$PORT"                   || exit 1
 
-    python ./tt_ulx3s_uart_test.py --port "$PORT" --reset-registers || exit 1
+    python ./tt_uart_test.py --port "$PORT" --reset-registers || exit 1
 
-    python ./tt_ulx3s_trng_uart_test.py --port "$PORT"              || exit 1
+    python ./tt_trng_uart_test.py --port "$PORT"              || exit 1
 
-    python ./tt_ulx3s_trng_repro_test.py --port  "$PORT"            || exit 1
+    python ./tt_trng_repro_test.py --port  "$PORT"            || exit 1
 fi
+
+# echo "Generating a 16MB trng_conditioned.bin"
+
+# Generate a bin file of random data to be analyzed
+# ./capture_trng_raw_uart.py  --port "$PORT"  --bytes 16777216  --out trng_conditioned.bin  --fast-baud  --conditioned
 
 echo "Port used: $PORT"
