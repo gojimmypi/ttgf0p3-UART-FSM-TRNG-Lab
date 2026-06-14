@@ -12,7 +12,7 @@
 
 /* We only want to include this file once, but it may be referenced BOTH by:
  *   - project.v
- *   - top_ulxs.v
+ *   - top_ulx3s.v
  *   - other wrappers
  */
 `ifndef PROJECT_CONFIG_V
