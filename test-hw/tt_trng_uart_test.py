@@ -46,11 +46,72 @@ def send_command(ser, command, args):
     return read_until_idle(ser, args.idle_time, args.timeout)
 
 
+def read_exact(ser, length, max_time):
+    data = bytearray()
+    start_time = time.monotonic()
+
+    while len(data) < length:
+        chunk = ser.read(length - len(data))
+
+        if chunk:
+            data.extend(chunk)
+            continue
+
+        if (time.monotonic() - start_time) >= max_time:
+            break
+
+    return bytes(data)
+
+
+def read_any_before_timeout(ser, max_time):
+    start_time = time.monotonic()
+
+    while True:
+        chunk = ser.read(1)
+
+        if chunk:
+            return chunk
+
+        if (time.monotonic() - start_time) >= max_time:
+            return b""
+
+
+def send_binary_command(ser, command, length, args):
+    ser.reset_input_buffer()
+    ser.write(command)
+    ser.flush()
+    return read_exact(ser, length, args.timeout)
+
+
 def expect_exact(name, actual, expected):
     if actual != expected:
         print(f"FAIL: {name}")
         print(f"  Expected: {expected!r}")
         print(f"  Actual:   {actual!r}")
+        return False
+
+    print(f"PASS: {name}")
+    return True
+
+
+def expect_length(name, actual, expected_length):
+    actual_length = len(actual)
+
+    if actual_length != expected_length:
+        print(f"FAIL: {name}")
+        print(f"  Expected length: {expected_length}")
+        print(f"  Actual length:   {actual_length}")
+        print(f"  Actual data:     {actual!r}")
+        return False
+
+    print(f"PASS: {name}")
+    return True
+
+
+def expect_no_extra_byte(name, actual):
+    if actual:
+        print(f"FAIL: {name}")
+        print(f"  Extra byte: {actual!r}")
         return False
 
     print(f"PASS: {name}")
@@ -74,6 +135,20 @@ def read_reg(ser, args, reg_num):
 def write_ok(ser, args, name, command):
     response = send_command(ser, command, args)
     return expect_exact(name, response, b"OK\r")
+
+
+def reset_config_registers(ser, args):
+    ok = True
+
+    ok = write_ok(ser, args, "Reset E0", b"E0\r") and ok
+    ok = write_ok(ser, args, "Reset V0", b"V0\r") and ok
+    ok = write_ok(ser, args, "Reset W0", b"W0\r") and ok
+    ok = write_ok(ser, args, "Reset S0", b"S0\r") and ok
+    ok = write_ok(ser, args, "Reset D10", b"D10\r") and ok
+    ok = write_ok(ser, args, "Reset M00", b"M00\r") and ok
+    ok = write_ok(ser, args, "Reset O01", b"O01\r") and ok
+
+    return ok
 
 
 def capture_sample(ser, args):
@@ -186,6 +261,47 @@ def collect_samples(ser, args, name, source_cmd, osc_cmd, div_cmd):
     return evaluate_samples(name, samples)
 
 
+def test_binary_stream_exact_length(ser, args):
+    ok = True
+
+    print("")
+    print("Running: TRNG binary stream exact length")
+
+    # Start from known register defaults before entering binary-stream mode.
+    ok = reset_config_registers(ser, args) and ok
+
+    # Disable updates before changing TRNG stream configuration.
+    ok = write_ok(ser, args, "Binary stream reset E0", b"E0\r") and ok
+
+    # Configure the same path that exposed the prior stream bug class.
+    ok = write_ok(ser, args, "Binary stream S3 mixed source", b"S3\r") and ok
+    ok = write_ok(ser, args, "Binary stream OFF oscillators", b"OFF\r") and ok
+    ok = write_ok(ser, args, "Binary stream D0F divider", b"D0F\r") and ok
+    ok = write_ok(ser, args, "Binary stream E1 enable", b"E1\r") and ok
+
+    data = send_binary_command(ser, b"C10\r", 16, args)
+    ok = expect_length("C10 returns exactly 16 bytes", data, 16) and ok
+
+    extra = read_any_before_timeout(ser, args.extra_timeout)
+    ok = expect_no_extra_byte("C10 has no extra byte", extra) and ok
+
+    ok = write_ok(ser, args, "Binary stream cleanup E0", b"E0\r") and ok
+
+    reg_ctrl = read_reg(ser, args, 0)
+
+    if reg_ctrl is None:
+        ok = False
+    elif reg_ctrl != 0x00:
+        print("FAIL: R0 after binary stream cleanup")
+        print("  Expected: 0x00")
+        print(f"  Actual:   0x{reg_ctrl:02X}")
+        ok = False
+    else:
+        print("PASS: R0 after binary stream cleanup")
+
+    return ok
+
+
 def test_lfsr_frozen_samples(ser, args):
     return collect_samples(
         ser,
@@ -236,6 +352,7 @@ def main():
     parser.add_argument("--baud", type=int, default=115200)
     parser.add_argument("--timeout", type=float, default=2.0)
     parser.add_argument("--idle-time", type=float, default=0.05)
+    parser.add_argument("--extra-timeout", type=float, default=0.25)
     parser.add_argument("--samples", type=int, default=8)
     args = parser.parse_args()
 
@@ -248,6 +365,7 @@ def main():
         time.sleep(0.1)
 
         ok = True
+        ok = test_binary_stream_exact_length(ser, args) and ok
         ok = test_lfsr_frozen_samples(ser, args) and ok
         ok = test_source_select_paths(ser, args) and ok
 
