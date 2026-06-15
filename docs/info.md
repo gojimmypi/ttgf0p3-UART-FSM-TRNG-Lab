@@ -116,7 +116,7 @@ Or:
 stty -F "$PORT" "$BAUD" cs8 -cstopb -parenb -ixon -ixoff -crtscts raw -echo min 0 time 5
 ```
 
-Type `V` and press `Enter` to query the version string (if enabled in the build). 
+Type `V` and press `Enter` to query the version string (if enabled in the build, on by default for TT). 
 Then you can send commands to configure the TRNG and read back entropy samples.
 
 Although there are case-insensitive settings available for local builds, they have been disabled 

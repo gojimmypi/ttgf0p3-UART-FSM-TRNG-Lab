@@ -6,10 +6,10 @@ Details of this project are located in [docs/info.md](./docs/info.md)
 
 This project is part of [Tiny Tapeout GF 26a](https://app.tinytapeout.com/shuttles/ttgf26a) shuttle in [Project #4337](https://app.tinytapeout.com/projects/4337).
 
-See companions projects:
+See companion projects:
 
-- This https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab (Global Foundry 180: milestone copy here from dev)
-- Companion https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab (Sky130: active development here)
+- This https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab (Global Foundry 180)
+- Companion https://github.com/gojimmypi/ttsky-UART-FSM-TRNG-Lab (Sky130)
 
 ## Files and Directories
 
