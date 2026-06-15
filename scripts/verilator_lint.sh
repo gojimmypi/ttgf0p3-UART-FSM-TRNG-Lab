@@ -3,7 +3,7 @@
 # Copyright (c) 2026 gojimmypi
 # SPDX-License-Identifier: Apache-2.0
 #
-# file: verilator_lint.sh
+# file: scripts/verilator_lint.sh
 #
 # This script is used to lint the Verilog project using Verilator.
 #

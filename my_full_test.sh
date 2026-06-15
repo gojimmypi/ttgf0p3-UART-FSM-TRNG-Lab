@@ -26,7 +26,7 @@ popd || exit 1
 
 pushd ice40 || exit 1
 
-. ./env_ice40.sh
+source ./env_ice40.sh
 ./build_and_flash.sh
 ./project_reset.sh
 ./run_tests.sh
