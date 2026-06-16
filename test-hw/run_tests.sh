@@ -62,7 +62,9 @@
 # Do not move this file. Referenced by TT 4337 Documentation https://app.tinytapeout.com/projects/4337
 
 PORT=/dev/ttyS12
-EXPECTED_VERSION="Version 1.0.2 6/16/2026"
+
+# Config file only for expected version
+CONFIG_FILE="../src/project_config.v"
 
 # Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:
@@ -84,6 +86,24 @@ EXPECT_PORT_VALUE=0
 EXPECT_BOARD_VERSION_VALUE=0
 PAUSE_FOR_TEST=0
 BUILD_ARGS=""
+
+
+# ------------------------------------------------------------------------------
+# Extract expected version
+# ------------------------------------------------------------------------------
+VERSION_LINE="$(grep '^[[:space:]]*`define[[:space:]]\+VERSION_STRING' "$CONFIG_FILE")"
+
+EXPECTED_VERSION="$(
+    echo "$VERSION_LINE" |
+    sed -E 's/^[[:space:]]*`define[[:space:]]+VERSION_STRING[[:space:]]+"([^"]*)".*/\1/'
+)"
+
+if [ -z "$EXPECTED_VERSION" ]; then
+    echo "ERROR: VERSION_STRING not found in $CONFIG_FILE" >&2
+    exit 1
+fi
+
+echo "Expected version: $EXPECTED_VERSION"EXPECTED_VERSION="Version 1.0.2 6/16/2026"
 
 # ------------------------------------------------------------------------------
 # Parameter processing
