@@ -126,7 +126,7 @@ module trng_cfg_ascii_core
 
 `ifdef USE_LONG_STRINGS
     localparam [4:0] ST_Q_STR      = 5'd14;
-    localparam [4:0] VERSION_LEN   = 5'd23;
+    localparam [4:0] VERSION_LEN   = `VERSION_STRING_LEN;
 `else
     /* Version string not implemented */
 `endif
@@ -323,39 +323,20 @@ module trng_cfg_ascii_core
 
 `ifdef USE_LONG_STRINGS
     /*
-     * Hard-coded version reply ROM.
-     * This intentionally avoids packed-string variable indexing so the version
-     * response synthesizes as a small, explicit byte mux.
+     * Version reply ROM.
+     * VERSION_STRING and VERSION_STRING_LEN are defined in project_config.v.
+     *
+     * Verilog strings are packed with the first character in the most
+     * significant byte, so idx 0 selects the top byte.
      */
+    localparam [(`VERSION_STRING_LEN * 8) - 1:0] VERSION_STRING_ROM = `VERSION_STRING;
+
     function [7:0] version_char;
         input [4:0] idx;
+        integer char_offset;
         begin
-            case (idx)
-                5'd0:  version_char = "V";
-                5'd1:  version_char = "e";
-                5'd2:  version_char = "r";
-                5'd3:  version_char = "s";
-                5'd4:  version_char = "i";
-                5'd5:  version_char = "o";
-                5'd6:  version_char = "n";
-                5'd7:  version_char = " ";
-                5'd8:  version_char = "1";
-                5'd9:  version_char = ".";
-                5'd10: version_char = "0";
-                5'd11: version_char = ".";
-                5'd12: version_char = "2";
-                5'd13: version_char = " ";
-                5'd14: version_char = "6";
-                5'd15: version_char = "/";
-                5'd16: version_char = "1";
-                5'd17: version_char = "6";
-                5'd18: version_char = "/";
-                5'd19: version_char = "2";
-                5'd20: version_char = "0";
-                5'd21: version_char = "2";
-                5'd22: version_char = "6";
-                default: version_char = 8'h00;
-            endcase
+            char_offset = (`VERSION_STRING_LEN - 1 - idx) * 8;
+            version_char = VERSION_STRING_ROM[char_offset +: 8];
         end
     endfunction
 `else
