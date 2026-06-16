@@ -16,7 +16,7 @@ An optional `SPI_TEST_FIXED` build mode macro keeps the earlier fixed-byte trans
 
 ## Example
 
-See the `../../ulx3s/ESP32` example application.
+See the [`/ulx3s/ESP32`](../../ulx3s/ESP32/) example application.
 
 ## Other SPI to consider
 

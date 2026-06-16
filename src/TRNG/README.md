@@ -6,13 +6,13 @@ Implements a [Ring Oscillator](https://en.wikipedia.org/wiki/Ring_oscillator) us
 
 ## FPGA
 
-The `TRNG_LAB_USE_REAL_RO` is *not* automatically defined (internal use only).
+&#x26A0;  The `TRNG_LAB_USE_REAL_RO` macro is *not* automatically defined for FPGA builds (internal use only), ans should *not* be manually defined by any external build process.
 
 The "RO" bits are deterministic LFSR-derived signals, not physical entropy sources. This path is for functional testing only.
 
 ## GF180 PDF
 
-The `TRNG_LAB_USE_REAL_RO` *is* automatically defined (internal use only).
+The `TRNG_LAB_USE_REAL_RO` macro *is* automatically defined (internal use only). Both `TRNG_USE_RO` and `TRNG_ALLOW_REAL_RO` should be defined in the `project_config.v`.
 
 There are several possible inverters to use in GF180. See
 
@@ -32,13 +32,12 @@ There are several possible inverters to use in GF180. See
 
 For reference:
 
-Option 1: gf180mcu_fd_sc_mcu7t5v0__inv_1
+Option 1: `gf180mcu_fd_sc_mcu7t5v0__inv_1`
 
    - https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/blob/main/cells/inv/gf180mcu_fd_sc_mcu7t5v0__inv_1.functional.v
    - https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/blob/main/cells/inv/gf180mcu_fd_sc_mcu7t5v0__inv_1.rst
 
-Option 2: gf180mcu_fd_sc_mcu7t5v0__inv_2
+Option 2: `gf180mcu_fd_sc_mcu7t5v0__inv_2`
 
    - https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/blob/main/cells/inv/gf180mcu_fd_sc_mcu7t5v0__inv_2.functional.v
    - https://github.com/google/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/blob/main/cells/inv/gf180mcu_fd_sc_mcu7t5v0__inv_2.rst
-
