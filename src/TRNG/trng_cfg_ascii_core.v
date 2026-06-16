@@ -33,12 +33,12 @@
  * - Bxy<CR>    : stream xy raw bytes, waiting for a fresh TRNG sample before each byte.
  * - Cxy<CR>    : Cxy: stream xy conditioned bytes, waiting for a fresh TRNG sample before each byte.
  * - U3<CR>     : select 921600 UART baud after OK<CR> completes.
- * - V<CR>      : replies Version 1.0.0 6/14/2026<CR>
+ * - V<CR>      : replies Version 1.0.2 6/16/2026<CR>
  *
  * Reply format:
  * - Successful write: OK<CR>
  * - Successful read : Rn=HH<CR>
- * - Version query   : Version 1.0.0  6/14/2026<CR>
+ * - Version query   : Version 1.0.2 6/16/2026<CR>
  * - Parse/error     : ?<CR>
  */
 `default_nettype none
@@ -126,8 +126,7 @@ module trng_cfg_ascii_core
 
 `ifdef USE_LONG_STRINGS
     localparam [4:0] ST_Q_STR      = 5'd14;
-    localparam integer                   VERSION_LEN = `VERSION_STRING_LEN; /* Must be defined if USE_LONG_STRINGS is defined.  See project.v */
-    localparam [(8 * VERSION_LEN) - 1:0] VERSION_STR = `VERSION_STRING;     /* Must be defined if USE_LONG_STRINGS is defined.  See project.v */
+    localparam [4:0] VERSION_LEN   = 5'd23;
 `else
     /* Version string not implemented */
 `endif
@@ -192,14 +191,10 @@ module trng_cfg_ascii_core
 
 `ifdef USE_LONG_STRINGS
     /*
-     * Generic string send support for multi-character replies such as version.
-     * active_str holds the current packed ASCII string, str_len is the number
-     * of valid characters, and str_index walks through the string one byte at
-     * a time.
+     * Version reply support.
+     * str_index walks through version_char() one byte at a time.
      */
-    reg [8*VERSION_LEN-1:0] active_str;
-    reg [5:0] str_index;
-    reg [5:0] str_len;
+    reg [4:0] str_index;
 `else
     /* no long strings */
 `endif
@@ -328,20 +323,39 @@ module trng_cfg_ascii_core
 
 `ifdef USE_LONG_STRINGS
     /*
-     * Return one ASCII character from a packed string.
-     * Index 0 returns the leftmost character in the packed constant.
+     * Hard-coded version reply ROM.
+     * This intentionally avoids packed-string variable indexing so the version
+     * response synthesizes as a small, explicit byte mux.
      */
-    function [7:0] str_get;
-        input [8*VERSION_LEN-1:0] str;
-        input [5:0] idx;
-        reg [7:0] shift_amt;
+    function [7:0] version_char;
+        input [4:0] idx;
         begin
-            shift_amt = (VERSION_LEN[7:0] - 8'd1 - {2'd0, idx}) << 3;
-
-            // Extract one byte from packed string "str".
-            // shift_amt is a byte-aligned bit index (0, 8, 16, ...).
-            // [shift_amt +: 8] means take 8 bits starting at shift_amt (i.e., str[shift_amt+7 : shift_amt]).
-            str_get = str[shift_amt +: 8];
+            case (idx)
+                5'd0:  version_char = "V";
+                5'd1:  version_char = "e";
+                5'd2:  version_char = "r";
+                5'd3:  version_char = "s";
+                5'd4:  version_char = "i";
+                5'd5:  version_char = "o";
+                5'd6:  version_char = "n";
+                5'd7:  version_char = " ";
+                5'd8:  version_char = "1";
+                5'd9:  version_char = ".";
+                5'd10: version_char = "0";
+                5'd11: version_char = ".";
+                5'd12: version_char = "2";
+                5'd13: version_char = " ";
+                5'd14: version_char = "6";
+                5'd15: version_char = "/";
+                5'd16: version_char = "1";
+                5'd17: version_char = "6";
+                5'd18: version_char = "/";
+                5'd19: version_char = "2";
+                5'd20: version_char = "0";
+                5'd21: version_char = "2";
+                5'd22: version_char = "6";
+                default: version_char = 8'h00;
+            endcase
         end
     endfunction
 `else
@@ -403,18 +417,11 @@ module trng_cfg_ascii_core
     endtask
 
 `ifdef USE_LONG_STRINGS
-    /*
-     * Start sending a packed ASCII string using the generic string serializer.
-     * The actual characters are launched through the normal one-byte queue.
-     */
-    task start_string;
-        input [((8 * VERSION_LEN) - 1):0] str;
-        input [5:0] len;
+    /* Start sending the hard-coded version string. */
+    task start_version;
         begin
-            active_str <= str;
-            str_len    <= len;
-            str_index  <= 6'd0;
-            state      <= ST_Q_STR;
+            str_index <= 5'd0;
+            state     <= ST_Q_STR;
         end
     endtask
 `else
@@ -456,9 +463,7 @@ module trng_cfg_ascii_core
         `endif /* TRNG_BINARY_STREAM */
 
         `ifdef USE_LONG_STRINGS
-            active_str            <= {(8 * VERSION_LEN){1'b0}};
-            str_index             <= 6'd0;
-            str_len               <= 6'd0;
+            str_index             <= 5'd0;
         `else
             /* no long strings */
         `endif
@@ -574,14 +579,14 @@ module trng_cfg_ascii_core
 
                         end else if ((cmd == "v") && (rx_byte == 8'h0D)) begin
                             `ifdef USE_LONG_STRINGS
-                                start_string(VERSION_STR, VERSION_LEN[5:0]);
+                                start_version();
                             `else
                                 state <= ST_Q_ERR;/* */
                             `endif
 `endif
                         end else if ((cmd == "V") && (rx_byte == 8'h0D)) begin
                             `ifdef USE_LONG_STRINGS
-                                start_string(VERSION_STR, VERSION_LEN[5:0]);
+                                start_version();
                             `else
                                 state <= ST_Q_ERR;/* */
                             `endif
@@ -785,14 +790,14 @@ module trng_cfg_ascii_core
 
             `ifdef USE_LONG_STRINGS
                 /*
-                 * Generic packed-string sender.
+                 * Version string sender.
                  * Characters are emitted one at a time through the normal queue
                  * and ST_WAIT_SEND handshake path.
                  */
                 ST_Q_STR: begin
                     if (!queued_tx_valid) begin
-                        if (str_index < str_len) begin
-                            queue_tx(str_get(active_str, str_index));
+                        if (str_index < VERSION_LEN) begin
+                            queue_tx(version_char(str_index));
                             str_index <= str_index + 1'b1;
                             next_state_after_send <= ST_Q_STR;
                             state <= ST_WAIT_SEND;
