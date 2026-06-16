@@ -237,6 +237,10 @@ if [ "$EXPECT_BOARD_VERSION_VALUE" -eq 1 ]; then
     exit 1
 fi
 
+# ------------------------------------------------------------------------------
+# Show the current configuration from src/project_config.v
+# ------------------------------------------------------------------------------
+../scripts/show_effective_defines.sh
 
 # ------------------------------------------------------------------------------
 # Optional build
