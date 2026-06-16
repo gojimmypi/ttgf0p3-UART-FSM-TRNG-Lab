@@ -84,6 +84,12 @@ EXPECT_BOARD_VERSION_VALUE=0
 PAUSE_FOR_TEST=0
 BUILD_ARGS=""
 
+
+# ------------------------------------------------------------------------------
+# Extract expected version
+# ------------------------------------------------------------------------------
+EXPECTED_VERSION="$(../scripts/get_expected_version.sh)"
+echo "Expected version: $EXPECTED_VERSION"
 # ------------------------------------------------------------------------------
 # Parameter processing
 # ------------------------------------------------------------------------------
@@ -237,6 +243,10 @@ if [ "$EXPECT_BOARD_VERSION_VALUE" -eq 1 ]; then
     exit 1
 fi
 
+# ------------------------------------------------------------------------------
+# Show the current configuration from src/project_config.v
+# ------------------------------------------------------------------------------
+../scripts/show_effective_defines.sh
 
 # ------------------------------------------------------------------------------
 # Optional build
@@ -297,13 +307,21 @@ else
     #                              [--repeat REPEAT] [--stop-on-fail]
     #                              [--reset-registers]
 
-    python ./tt_uart_test.py --port "$PORT"                   || exit 1
+    python ./tt_uart_test.py \
+        --port "$PORT" \
+        --expected-version "$EXPECTED_VERSION"                 || exit 1
 
-    python ./tt_uart_test.py --port "$PORT" --reset-registers || exit 1
+    python ./tt_uart_test.py \
+        --port "$PORT" \
+        --expected-version "$EXPECTED_VERSION" \
+        --reset-registers                                      || exit 1
 
-    python ./tt_trng_uart_test.py --port "$PORT"              || exit 1
+    # Includes health-status smoke, U0/U1/U2/U3 baud transitions,
+    # C10 conditioned stream exact-length, B10 raw stream exact-length,
+    # frozen sample checks, and source-select path checks.
+    python ./tt_trng_uart_test.py --port "$PORT"               || exit 1
 
-    python ./tt_trng_repro_test.py --port  "$PORT"            || exit 1
+    python ./tt_trng_repro_test.py --port "$PORT"              || exit 1
 fi
 
 # echo "Generating a 16MB trng_conditioned.bin"

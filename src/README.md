@@ -43,6 +43,8 @@ These changes have been applied / added to `src\config.json`:
   "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 30,
 ```
 
+The design is intended for 25 MHz but is intentionally set to `"CLOCK_PERIOD": 20` (50 MHz) over-constraint.
+
 First GDS Post Design Repair log in GF180: [GRT / GPL Design Repair Test #49](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/runs/27211329394/job/80340895326) 
 in [Commit d3155f9](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/commit/d3155f9d3418fc884a32badff31be2cce4a5a792).
 

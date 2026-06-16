@@ -389,7 +389,7 @@ fi
 echo "Verbose cleanup: $VERBOSE_CLEANUP"
 echo
 
-./show_effective_defines.sh
+../scripts/show_effective_defines.sh
 
 for x in $(seq 1 "$RUNS"); do
     capture_file="$TEST_HW_DIR/$THE_FILE_BASE.$x.bin"
