@@ -17,10 +17,9 @@
  */
 `ifndef PROJECT_CONFIG_V
     `define PROJECT_CONFIG_V
-
-    /* There's about a 5% (~ 100 cells) increase in the number of cells when using long strings.
+    /* There's <1% (~ 21 cells) increase in the number of cells when using long strings.
      * Currently only the version string is implemented. */
-    // `define USE_LONG_STRINGS
+    `define USE_LONG_STRINGS
 
     `ifdef USE_LONG_STRINGS
         `define VERSION_STRING_LEN 23 /* 123456789012345678901234 */   
