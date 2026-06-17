@@ -60,3 +60,4 @@ test/gate_level_netlist.v
 /test-hw/test_conditioned_fast.bin
 /test-hw/trng_conditioned_115200.bin
 /test-hw/test_conditioned_115200.bin
+/artifacts
