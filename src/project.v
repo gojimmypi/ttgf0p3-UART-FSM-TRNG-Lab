@@ -227,11 +227,12 @@ module UART_FSM_TRNG_Lab
 
 `ifdef SPI_REG_ACCESS
     `ifdef JTAG_ENABLED
-        /* Only equal-length JTAG and SPI registers supported at this time */
-        if (`SPI_ADDR_MSB != `JTAG_ADDR_MSB) begin : gen_spi_jtag_addr_mismatch
+        /* Only equal-length JTAG and SPI registers supported at this time, check MSB: */
+        if (`SPI_ADDR_MSB != `JTAG_ADDR_MSB) begin : gen_spi_jtag_msb_mismatch
             PROJECT_SPI_ADDR_MSB_VS_JTAG_ADDR_MSB_LENGTH_MISMATCH  u_stop ();
         end
 
+        /* Only equal-length JTAG and SPI registers supported at this time, check lengvth: */
         if (`SPI_ADDR_WIDTH != `JTAG_ADDR_WIDTH) begin : gen_spi_jtag_addr_mismatch
             PROJECT_SPI_ADDR_MSB_VS_JTAG_ADDR_MSB_LENGTH_MISMATCH  u_stop ();
         end
