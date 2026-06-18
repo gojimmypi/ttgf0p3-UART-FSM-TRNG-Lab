@@ -120,13 +120,7 @@ module tt_spi_slave
             spi_sck_sync <= {spi_sck_sync[1:0], spi_sck};
             spi_cs_sync  <= {spi_cs_sync[1:0], spi_cs_n};
             reg_wr_en    <= 1'b0;
-`ifdef MAX_SPI_REG
-            reg_addr     <= 7'd0;
-`elsif BIG16_SPI_REG
-            reg_addr     <= 4'd0;
-`else
-            reg_addr     <= 3'd0;
-`endif
+            reg_addr     <= {`SPI_ADDR_WIDTH{1'b0}};
             reg_wdata    <= 8'h00;
 
             /* SPI slave, mode 0 (CPOL=0, CPHA=0), MSB-first */
@@ -220,13 +214,7 @@ module tt_spi_slave
             load_read_data <= 1'b0;
             spi_miso       <= SPI_IDLE_MISO;
             reg_wr_en      <= 1'b0;
-`ifdef MAX_SPI_REG
-            reg_addr       <= 7'd0;
-`elsif BIG16_SPI_REG
-            reg_addr       <= 4'd0;
-`else
-            reg_addr       <= 3'd0;
-`endif
+            reg_addr       <= {`SPI_ADDR_WIDTH{1'b0}};
             reg_wdata      <= 8'h00;
         end else begin
             spi_sck_sync <= {spi_sck_sync[1:0], spi_sck};
