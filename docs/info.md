@@ -890,7 +890,7 @@ The SPI interface is available when `SPI_ENABLED` and `SPI_REG_ACCESS` are enabl
 | CPHA | 0 |
 | Bit order | MSB first |
 | Chip select | Active low, `CS_N` |
-| Register address width | 3 bits |
+| Register address width | 3 .. 7 bits (see project_config.v ) |
 
 #### SPI command byte
 
@@ -898,7 +898,7 @@ The SPI interface is available when `SPI_ENABLED` and `SPI_REG_ACCESS` are enabl
 | --- | --- |
 | `bit[7]` | `1` = read, `0` = write |
 | `bit[6:3]` | Ignored |
-| `bit[2:0]` | Register address `0..7` |
+| `bit[2:0]` | Register address `0..7` or `0..15` or `0..127` (see project_config.v ) |
 
 #### SPI read transaction
 

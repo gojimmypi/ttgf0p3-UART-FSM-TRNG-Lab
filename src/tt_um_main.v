@@ -359,7 +359,16 @@ module tt_um_main
         .spi_reg_wdata(spi_reg_wdata),
         .spi_reg_rdata(spi_reg_rdata)
 `endif
-    );
+
+`ifdef BIG16_SPI_REG
+        ,
+        .ui_in(ui_in),
+        .uo_out(uo_out),
+        .uio_in(uio_in),
+        .uio_out(uio_out),
+        .uio_oe(uio_oe)
+`endif    
+);
 
 /*
  *******************************************************************************

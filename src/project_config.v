@@ -78,6 +78,7 @@
      *   7 bits: 0..127 with MAX_SPI_REG  */
     // `define MAX_SPI_REG
     `define BIG16_SPI_REG
+    /* Testing with ESP32 regs TODO remove this comment */
 
     `define TRNG_ENABLED
     `define TRNG_BINARY_STREAM
@@ -193,7 +194,9 @@
         /* FPGA only: A practical lightweight candidate is a xoshiro-style 128-bit PRNG. 
          * It is not cryptographic, but it is much more likely to pass STS than the current 16-bit LFSR tap source */
         //`define FPGA_NIST_PRNG_SOURCE
-    
+
+        `define ULX3S_SPI_ENABLED
+
     `elsif IS_MY_IVERILOG_SIMULATION 
         /* This is used by the [project]/test/my_test.sh simulation test script */
         // `define PIN_DIAG

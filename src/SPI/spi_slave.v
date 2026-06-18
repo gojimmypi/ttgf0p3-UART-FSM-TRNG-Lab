@@ -267,7 +267,7 @@ module tt_spi_slave
                                 state <= ST_CMD;
                             end /* default state */
 
-                        endcase /* state)
+                        endcase /* state */
 
                     end else begin
                         /* ! byte_done */

@@ -36,7 +36,12 @@
 #define SPI_CLOCK_HZ        1000000
 
 #define TT_SPI_READ_FLAG    0x80U
-#define TT_SPI_ADDR_MASK    0x07U
+
+#ifdef FPGA_TRNG_BIG16_SPI_REG
+    #define TT_SPI_ADDR_MASK    0x0FU
+#else
+    #define TT_SPI_ADDR_MASK    0x07U
+#endif
 
 static const char* const TAG = "ulx3s_spi";
 static spi_device_handle_t ulx3s_spi;

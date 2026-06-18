@@ -73,6 +73,14 @@ module trng_cfg_ascii_core
     input  wire [7:0] reg_rawlo,
     input  wire [7:0] reg_rawhi,
 
+`ifdef BIG16_SPI_REG
+    input  wire [7:0] ui_in,
+    input  wire [7:0] uo_out,
+    input  wire [7:0] uio_in,
+    input  wire [7:0] uio_out,
+    input  wire [7:0] uio_oe,
+`endif
+
 `ifdef TRNG_BINARY_STREAM
     input  wire [7:0] stream_sample_count,
 `endif
@@ -133,6 +141,14 @@ module trng_cfg_ascii_core
     localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWLO  = 6;
     localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWHI  = 7;
 
+
+`ifdef BIG16_SPI_REG
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_UI_IN   = 8;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_UO_OUT  = 9;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_UIO_IN  = 10;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_UIO_OUT = 11;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_UIO_OE  = 12;
+`endif
 
 `ifdef USE_LONG_STRINGS
     localparam [4:0] ST_Q_STR      = 5'd14;
@@ -274,6 +290,7 @@ module trng_cfg_ascii_core
 
         begin
             case (addr)
+                /* Standard minimal REGS 0..7 */
                 SPI_REG_ADDR_CTRL:   read_reg = reg_ctrl;
                 SPI_REG_ADDR_SRC:    read_reg = reg_src;
                 SPI_REG_ADDR_DIV:    read_reg = reg_div;
@@ -282,6 +299,19 @@ module trng_cfg_ascii_core
                 SPI_REG_ADDR_STATUS: read_reg = reg_status;
                 SPI_REG_ADDR_RAWLO:  read_reg = reg_rawlo;
                 SPI_REG_ADDR_RAWHI:  read_reg = reg_rawhi;
+
+`ifdef BIG16_SPI_REG
+                /* REGS 8..15 */
+                SPI_REG_ADDR_UI_IN:   read_reg = ui_in;
+                SPI_REG_ADDR_UO_OUT:  read_reg = uo_out;
+                SPI_REG_ADDR_UIO_IN:  read_reg = uio_in;
+                SPI_REG_ADDR_UIO_OUT: read_reg = uio_out;
+                SPI_REG_ADDR_UIO_OE:  read_reg = uio_oe;
+                /* 13 unused */
+                /* 14 unused */
+                /* 15 unused */
+`endif
+
                 default:             read_reg = 8'h00;
             endcase
         end
@@ -319,6 +349,15 @@ module trng_cfg_ascii_core
             SPI_REG_ADDR_STATUS: spi_reg_rdata = reg_status;
             SPI_REG_ADDR_RAWLO:  spi_reg_rdata = reg_rawlo;
             SPI_REG_ADDR_RAWHI:  spi_reg_rdata = reg_rawhi;
+
+        `ifdef BIG16_SPI_REG
+            SPI_REG_ADDR_UI_IN:   spi_reg_rdata = ui_in;
+            SPI_REG_ADDR_UO_OUT:  spi_reg_rdata = uo_out;
+            SPI_REG_ADDR_UIO_IN:  spi_reg_rdata = uio_in;
+            SPI_REG_ADDR_UIO_OUT: spi_reg_rdata = uio_out;
+            SPI_REG_ADDR_UIO_OE:  spi_reg_rdata = uio_oe;
+        `endif
+
             default:             spi_reg_rdata = 8'h00;
         endcase
     end
