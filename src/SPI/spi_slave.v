@@ -74,13 +74,7 @@ module tt_spi_slave
     output reg        spi_miso,
 
     output reg        reg_wr_en,
-`ifdef MAX_SPI_REG
-    output reg  [6:0] reg_addr,
-`elsif BIG16_SPI_REG
-    output reg  [3:0] reg_addr,
-`else
-    output reg  [2:0] reg_addr,
-`endif
+    output reg  [`SPI_ADDR_MSB:0] reg_addr,
     output reg  [7:0] reg_wdata,
     input  wire [7:0] reg_rdata
 );
@@ -265,13 +259,7 @@ module tt_spi_slave
                         case (state)
                             ST_CMD: begin
                                 /* rx_next[7] == 0 write; 1 read */
-`ifdef MAX_SPI_REG
-                                reg_addr <= rx_next[6:0];
-`elsif BIG16_SPI_REG
-                                reg_addr <= rx_next[3:0];
-`else
-                                reg_addr <= rx_next[2:0];
-`endif
+                                reg_addr <= rx_next[`SPI_ADDR_MSB:0];
                                 cmd_read <= rx_next[7];
                                 state    <= ST_DATA;
 

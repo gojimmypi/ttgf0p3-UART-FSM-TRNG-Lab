@@ -224,6 +224,19 @@ module UART_FSM_TRNG_Lab
         if ((CLOCK_HZ / UART_BAUD) == 32'd0) begin : gen_bad_uart_divider
             PROJECT_UART_DIVIDER_MUST_NOT_BE_ZERO u_stop ();
         end
+
+`ifdef SPI_REG_ACCESS
+    `ifdef JTAG_ENABLED
+        /* Only equal-length JTAG and SPI registers supported at this time */
+        if (`SPI_ADDR_MSB != `JTAG_ADDR_MSB) begin : gen_spi_jtag_addr_mismatch
+            PROJECT_SPI_ADDR_MSB_VS_JTAG_ADDR_MSB_LENGTH_MISMATCH  u_stop ();
+        end
+
+        if (`SPI_ADDR_WIDTH != `JTAG_ADDR_WIDTH) begin : gen_spi_jtag_addr_mismatch
+            PROJECT_SPI_ADDR_MSB_VS_JTAG_ADDR_MSB_LENGTH_MISMATCH  u_stop ();
+        end
+    `endif /* JTAG_ENABLED */
+`endif /* SPI_REG_ACCESS */
     endgenerate
 
     wire unused_ok;

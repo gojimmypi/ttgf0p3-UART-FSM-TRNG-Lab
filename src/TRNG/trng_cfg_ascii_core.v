@@ -94,7 +94,7 @@ module trng_cfg_ascii_core
 `endif /* TRNG_CONDITIONED_STREAM */
 
     input  wire       spi_reg_wr_en,
-    input  wire [2:0] spi_reg_addr,
+    input  wire [`SPI_ADDR_MSB:0] spi_reg_addr,
     input  wire [7:0] spi_reg_wdata,
 
 `ifdef JTAG_ENABLED
@@ -252,7 +252,7 @@ module trng_cfg_ascii_core
      * With TRNG_HEALTH_STATUS enabled, R5 bits 7..3 are health flags.
      */
     function [7:0] read_reg;
-        input [2:0] addr;
+        input [`SPI_ADDR_MSB:0] addr;
         begin
             case (addr)
                 3'd0: read_reg = reg_ctrl;
@@ -290,17 +290,26 @@ module trng_cfg_ascii_core
 `endif
 
 `ifdef JTAG_ENABLED
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_CTRL   = 0;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_SRC    = 1;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_DIV    = 2;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_MODE   = 3;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_OSCEN  = 4;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_STATUS = 5;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWLO  = 6;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWHI  = 7;
+
     always @(*) begin
         case (spi_reg_addr)
-            3'd0: spi_reg_rdata = reg_ctrl;
-            3'd1: spi_reg_rdata = reg_src;
-            3'd2: spi_reg_rdata = reg_div;
-            3'd3: spi_reg_rdata = reg_mode;
-            3'd4: spi_reg_rdata = reg_oscen;
-            3'd5: spi_reg_rdata = reg_status;
-            3'd6: spi_reg_rdata = reg_rawlo;
-            3'd7: spi_reg_rdata = reg_rawhi;
-            default: spi_reg_rdata = 8'h00;
+            SPI_REG_ADDR_CTRL:   spi_reg_rdata = reg_ctrl;
+            SPI_REG_ADDR_SRC:    spi_reg_rdata = reg_src;
+            SPI_REG_ADDR_DIV:    spi_reg_rdata = reg_div;
+            SPI_REG_ADDR_MODE:   spi_reg_rdata = reg_mode;
+            SPI_REG_ADDR_OSCEN:  spi_reg_rdata = reg_oscen;
+            SPI_REG_ADDR_STATUS: spi_reg_rdata = reg_status;
+            SPI_REG_ADDR_RAWLO:  spi_reg_rdata = reg_rawlo;
+            SPI_REG_ADDR_RAWHI:  spi_reg_rdata = reg_rawhi;
+            default:             spi_reg_rdata = 8'h00;
         endcase
     end
 `else
@@ -375,15 +384,20 @@ module trng_cfg_ascii_core
     endtask
 
     task do_spi_write;
-        input [2:0] addr;
+        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_CTRL  = 0;
+        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_SRC   = 1;
+        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_DIV   = 2;
+        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_MODE  = 3;
+        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_OSCEN = 4;
+        input [`SPI_ADDR_MSB:0] addr;
         input [7:0] value;
         begin
             case (addr)
-                3'd0: reg_ctrl  <= value;
-                3'd1: reg_src   <= value;
-                3'd2: reg_div   <= value;
-                3'd3: reg_mode  <= value;
-                3'd4: reg_oscen <= value;
+                SPI_ADDR_CTRL:  reg_ctrl  <= value;
+                SPI_ADDR_SRC:   reg_src   <= value;
+                SPI_ADDR_DIV:   reg_div   <= value;
+                SPI_ADDR_MODE:  reg_mode  <= value;
+                SPI_ADDR_OSCEN: reg_oscen <= value;
                 default: begin end
             endcase
         end

@@ -121,27 +121,28 @@ module tt_um_main
 
 `ifdef SPI_REG_ACCESS
     wire       spi_reg_wr_en;
-    wire [2:0] spi_reg_addr;
+    wire [`SPI_ADDR_MSB:0] spi_reg_addr;
     wire [7:0] spi_reg_wdata;
     wire [7:0] spi_reg_rdata;
 
     `ifdef SPI_ENABLED
         wire       spi_slave_reg_wr_en;
-        wire [2:0] spi_slave_reg_addr;
+        wire [`SPI_ADDR_MSB:0] spi_slave_reg_addr;
         wire [7:0] spi_slave_reg_wdata;
-    `endif
+    `endif /* SPI_ENABLED */
+
     `ifdef JTAG_ENABLED
         wire       jtag_reg_wr_en;
-        wire [7:0] jtag_reg_addr;
+        wire [`JTAG_ADDR_MSB:0] jtag_reg_addr;
         wire [7:0] jtag_reg_wdata;
         wire       spi_reg_wr_en_mux;
-        wire [2:0] spi_reg_addr_mux;
+        wire [`SPI_ADDR_MSB:0] spi_reg_addr_mux;
         wire [7:0] spi_reg_wdata_mux;
         reg        spi_reg_wr_en_r;
-        reg  [2:0] spi_reg_addr_r;
+        reg  [`SPI_ADDR_MSB:0] spi_reg_addr_r;
         reg  [7:0] spi_reg_wdata_r;
-        wire _unused_jtag_reg_addr = &{1'b0, jtag_reg_addr[7:3]};
-    `endif
+        // wire _unused_jtag_reg_addr = &{1'b0, jtag_reg_addr[7:(`SPI_ADDR_MSB + 1)]};
+    `endif /* JTAG_ENABLED */
 `endif /* SPI_REG_ACCESS */
 
 `ifdef SPI_ENABLED
@@ -151,9 +152,9 @@ module tt_um_main
     wire spi_miso;
     `ifndef SPI_REG_ACCESS
         wire       spi_unused_reg_wr_en;
-        wire [2:0] spi_unused_reg_addr;
         wire [7:0] spi_unused_reg_wdata;
-    `endif
+        wire [`SPI_ADDR_MSB:0] spi_unused_reg_addr;
+    `endif /* SPI_REG_ACCESS */
 `endif /* SPI_ENABLED */
 
 `ifdef JTAG_ENABLED
@@ -300,7 +301,7 @@ module tt_um_main
     always @(posedge clk) begin
         if (!rst_sync_n) begin
             spi_reg_wr_en_r <= 1'b0;
-            spi_reg_addr_r  <= 3'b000;
+            spi_reg_addr_r  <= {`SPI_ADDR_WIDTH{1'b0}};
             spi_reg_wdata_r <= 8'h00;
         end else begin
             spi_reg_wr_en_r <= spi_reg_wr_en_mux;
@@ -465,7 +466,7 @@ module tt_um_main
 `ifdef SPI_REG_ACCESS
     `ifdef JTAG_ENABLED
         assign spi_reg_wr_en_mux = debug_is_jtag ? jtag_reg_wr_en : spi_slave_reg_wr_en;
-        assign spi_reg_addr_mux  = debug_is_jtag ? jtag_reg_addr[2:0] : spi_slave_reg_addr;
+        assign spi_reg_addr_mux  = debug_is_jtag ? jtag_reg_addr  : spi_slave_reg_addr;
         assign spi_reg_wdata_mux = debug_is_jtag ? jtag_reg_wdata : spi_slave_reg_wdata;
 
         assign spi_reg_wr_en = spi_reg_wr_en_r;

@@ -23,7 +23,7 @@
 
     `ifdef USE_LONG_STRINGS
         `define VERSION_STRING_LEN 23 /* 123456789012345678901234 */   
-        `define VERSION_STRING          "Version 1.0.3 6/17/2026"
+        `define VERSION_STRING          "Version 1.0.4 6/18/2026"
         /* GF26a deadline: June 22, 1:00PM PDT */
     `else
         /* no long strings */
@@ -64,6 +64,11 @@
     // `define ANALOG_ENABLED
     `define UART_ENABLED
 
+    /*
+     * --------------------------------------------------------------------------------------------
+     * SPI Config. See SPI/spi_slave.v
+     * --------------------------------------------------------------------------------------------
+     */
     `define SPI_ENABLED
     `define SPI_REG_ACCESS
 
@@ -71,9 +76,8 @@
      * Optionally expand to:
      *   4 bits: 0..15 with BIG16_SPI_REG 
      *   7 bits: 0..127 with MAX_SPI_REG  */
-
-    // `define BIG16_SPI_REG
     // `define MAX_SPI_REG
+    // `define BIG16_SPI_REG
 
     `define TRNG_ENABLED
     `define TRNG_BINARY_STREAM
@@ -217,6 +221,22 @@
         `endif
     `endif
 
+    `ifdef SPI_REG_ACCESS
+        `ifdef MAX_SPI_REG
+            `define SPI_ADDR_MSB 6
+        `elsif BIG16_SPI_REG
+            `define SPI_ADDR_MSB 3
+        `else
+            `define SPI_ADDR_MSB 2
+        `endif
+        `define SPI_ADDR_WIDTH  (`SPI_ADDR_MSB + 1)
+    `endif
+
+    `ifdef JTAG_ENABLED
+        `define JTAG_ADDR_MSB `SPI_ADDR_MSB
+        `define JTAG_ADDR_WIDTH (`JTAG_ADDR_MSB + 1)
+    `endif
+
     /* Some final config sanity checks */
     `ifdef TRNG_CONDITIONED_STREAM
         `ifndef TRNG_BINARY_STREAM
@@ -279,6 +299,18 @@
     `ifdef SPI_REG_ACCESS
         `ifndef SPI_ENABLED
             PROJECT_SPI_REG_ACCESS_REQUIRES_SPI_ENABLED u_stop ();
+        `endif
+    `endif
+
+    `ifdef BIG16_SPI_REG
+        `ifdef MAX_SPI_REG
+            PROJECT_SPI_BIG16_AND_MAX_PICK_ONE u_stop (); /* Define none or only one SPI reg size */
+        `endif
+    `endif
+
+    `ifdef MAX_SPI_REG
+        `ifdef BIG16_SPI_REG
+            PROJECT_SPI_MAX_AND_BIG16_PICK_ONE u_stop (); /* Define none or only one SPI reg size */
         `endif
     `endif
 
