@@ -231,6 +231,7 @@ module tt_spi_slave
                 spi_miso       <= 1'b0;
             end else if (!spi_cs_active) begin
                 spi_miso <= SPI_IDLE_MISO;
+
             end else begin
                 if (spi_sck_rise) begin
                     rx_shift <= rx_next;
@@ -251,7 +252,7 @@ module tt_spi_slave
                                     tx_shift <= 8'h00;
                                     spi_miso <= 1'b0;
                                 end
-                            end
+                            end /* ST_CMD */
 
                             ST_DATA: begin
                                 if (!cmd_read) begin
@@ -260,16 +261,19 @@ module tt_spi_slave
                                 end
 
                                 state <= ST_DATA;
-                            end
+                            end /* ST_DATA */
 
                             default: begin
                                 state <= ST_CMD;
-                            end
-                        endcase
+                            end /* default state */
+
+                        endcase /* state)
+
                     end else begin
+                        /* ! byte_done */
                         bit_count <= bit_count + 1'b1;
                     end
-                end
+                end /* spi_sck_rise */
 
                 if (spi_sck_fall) begin
                     if (load_read_data) begin
@@ -280,13 +284,13 @@ module tt_spi_slave
                         spi_miso <= tx_shift[7];
                         tx_shift <= {tx_shift[6:0], 1'b0};
                     end
-                end
-            end
-        end
-    end
+                end /* spi_sck_fall */
+            end /* else spi_cs_active and !spi_cs_start */
+        end /* ! rst_n */
+    end /* always */
 
 `endif
 
-endmodule
+endmodule /* tt_spi_slave */
 
 `default_nettype wire
