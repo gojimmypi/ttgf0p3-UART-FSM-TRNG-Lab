@@ -124,6 +124,16 @@ module trng_cfg_ascii_core
     localparam [4:0] ST_Q_ERR      = 5'd12;
     localparam [4:0] ST_WAIT_SEND  = 5'd13;
 
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_CTRL   = 0;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_SRC    = 1;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_DIV    = 2;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_MODE   = 3;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_OSCEN  = 4;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_STATUS = 5;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWLO  = 6;
+    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWHI  = 7;
+
+
 `ifdef USE_LONG_STRINGS
     localparam [4:0] ST_Q_STR      = 5'd14;
     localparam [4:0] VERSION_LEN   = `VERSION_STRING_LEN;
@@ -147,7 +157,7 @@ module trng_cfg_ascii_core
     reg [3:0] hex1;
     reg [3:0] hex2;
     reg       need_two_digits;
-    reg [2:0] read_addr;
+    reg [`SPI_ADDR_MSB:0] read_addr;
     reg [7:0] reply_value;
 
 `ifdef ADJUSTABLE_BAUD_ENABLED
@@ -253,17 +263,18 @@ module trng_cfg_ascii_core
      */
     function [7:0] read_reg;
         input [`SPI_ADDR_MSB:0] addr;
+
         begin
             case (addr)
-                3'd0: read_reg = reg_ctrl;
-                3'd1: read_reg = reg_src;
-                3'd2: read_reg = reg_div;
-                3'd3: read_reg = reg_mode;
-                3'd4: read_reg = reg_oscen;
-                3'd5: read_reg = reg_status;
-                3'd6: read_reg = reg_rawlo;
-                3'd7: read_reg = reg_rawhi;
-                default: read_reg = 8'h00;
+                SPI_REG_ADDR_CTRL:   read_reg = reg_ctrl;
+                SPI_REG_ADDR_SRC:    read_reg = reg_src;
+                SPI_REG_ADDR_DIV:    read_reg = reg_div;
+                SPI_REG_ADDR_MODE:   read_reg = reg_mode;
+                SPI_REG_ADDR_OSCEN:  read_reg = reg_oscen;
+                SPI_REG_ADDR_STATUS: read_reg = reg_status;
+                SPI_REG_ADDR_RAWLO:  read_reg = reg_rawlo;
+                SPI_REG_ADDR_RAWHI:  read_reg = reg_rawhi;
+                default:             read_reg = 8'h00;
             endcase
         end
     endfunction
@@ -290,15 +301,6 @@ module trng_cfg_ascii_core
 `endif
 
 `ifdef JTAG_ENABLED
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_CTRL   = 0;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_SRC    = 1;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_DIV    = 2;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_MODE   = 3;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_OSCEN  = 4;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_STATUS = 5;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWLO  = 6;
-    localparam [`SPI_ADDR_MSB:0] SPI_REG_ADDR_RAWHI  = 7;
-
     always @(*) begin
         case (spi_reg_addr)
             SPI_REG_ADDR_CTRL:   spi_reg_rdata = reg_ctrl;
@@ -384,20 +386,15 @@ module trng_cfg_ascii_core
     endtask
 
     task do_spi_write;
-        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_CTRL  = 0;
-        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_SRC   = 1;
-        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_DIV   = 2;
-        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_MODE  = 3;
-        localparam [`SPI_ADDR_MSB:0] SPI_ADDR_OSCEN = 4;
         input [`SPI_ADDR_MSB:0] addr;
         input [7:0] value;
         begin
             case (addr)
-                SPI_ADDR_CTRL:  reg_ctrl  <= value;
-                SPI_ADDR_SRC:   reg_src   <= value;
-                SPI_ADDR_DIV:   reg_div   <= value;
-                SPI_ADDR_MODE:  reg_mode  <= value;
-                SPI_ADDR_OSCEN: reg_oscen <= value;
+                SPI_REG_ADDR_CTRL:  reg_ctrl  <= value;
+                SPI_REG_ADDR_SRC:   reg_src   <= value;
+                SPI_REG_ADDR_DIV:   reg_div   <= value;
+                SPI_REG_ADDR_MODE:  reg_mode  <= value;
+                SPI_REG_ADDR_OSCEN: reg_oscen <= value;
                 default: begin end
             endcase
         end
@@ -433,7 +430,7 @@ module trng_cfg_ascii_core
             hex2                  <= 4'h0;
             need_two_digits       <= 1'b0;
             read_addr             <= 3'd0;
-            reply_value           <= 8'h00;
+            reply_value           <= 8'h00;  // smaller?
 `ifdef ADJUSTABLE_BAUD_ENABLED
             pending_baud_valid    <= 1'b0;
             pending_baud_sel      <= 2'd0;
@@ -720,7 +717,8 @@ module trng_cfg_ascii_core
 
                 ST_Q_N: begin
                     if (!queued_tx_valid) begin
-                        queue_tx(to_hex_ascii({1'b0, read_addr}));
+                        /* UART R command still only replies R0 through R7 */
+                        queue_tx(to_hex_ascii({1'b0, read_addr[2:0]}));
                         next_state_after_send <= ST_Q_EQ;
                         state <= ST_WAIT_SEND;
                     end
