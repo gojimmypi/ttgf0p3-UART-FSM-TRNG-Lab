@@ -21,7 +21,7 @@ UART_TX_BIT = 4
 
 EXPECTED_VERSION_PREFIX = b"Version "
 
-TRNG_HEALTH_STATUS_DEBUG_PAGE_SELECT = True
+TRNG_HEALTH_STATUS_DEBUG_PAGE_SELECT = False
 
 def set_bit(value: int, bit_index: int, bit_value: int) -> int:
     mask = 1 << bit_index
