@@ -157,7 +157,15 @@ module trng_cfg_ascii_core
     reg [3:0] hex1;
     reg [3:0] hex2;
     reg       need_two_digits;
-    reg [`SPI_ADDR_MSB:0] read_addr;
+    reg [2:0] read_addr;
+
+`ifdef MAX_SPI_REG
+    wire [`SPI_ADDR_MSB:0] read_reg_addr = {4'b0000, read_addr};
+`elsif BIG16_SPI_REG
+    wire [`SPI_ADDR_MSB:0] read_reg_addr = {1'b0, read_addr};
+`else
+    wire [`SPI_ADDR_MSB:0] read_reg_addr = read_addr;
+`endif
     reg [7:0] reply_value;
 
 `ifdef ADJUSTABLE_BAUD_ENABLED
@@ -430,7 +438,7 @@ module trng_cfg_ascii_core
             hex2                  <= 4'h0;
             need_two_digits       <= 1'b0;
             read_addr             <= 3'd0;
-            reply_value           <= 8'h00;  // smaller?
+            reply_value           <= 8'h00;
 `ifdef ADJUSTABLE_BAUD_ENABLED
             pending_baud_valid    <= 1'b0;
             pending_baud_sel      <= 2'd0;
@@ -636,7 +644,7 @@ module trng_cfg_ascii_core
 `else
                             if (cmd == "R") begin
 `endif
-                                reply_value <= read_reg(read_addr);
+                                reply_value <= read_reg(read_reg_addr);
                                 state <= ST_Q_R;
 
 `ifdef TRNG_BINARY_STREAM
@@ -718,7 +726,7 @@ module trng_cfg_ascii_core
                 ST_Q_N: begin
                     if (!queued_tx_valid) begin
                         /* UART R command still only replies R0 through R7 */
-                        queue_tx(to_hex_ascii({1'b0, read_addr[2:0]}));
+                        queue_tx(to_hex_ascii({1'b0, read_addr}));
                         next_state_after_send <= ST_Q_EQ;
                         state <= ST_WAIT_SEND;
                     end
