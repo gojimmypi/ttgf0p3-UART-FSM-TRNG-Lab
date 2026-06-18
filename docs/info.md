@@ -64,6 +64,11 @@ simulate the TRNG bitstream.
 See the `FPGA_NIST_PRNG_SOURCE` and `FPGA_BASIC_LFSR_RO_TAPS` options in [`project_config.v`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/blob/main/src/project_config.v) 
 that are disabled for the TT build.
 
+## Commander App Tests
+
+Use the [commander.tinytapeout.com](https://commander.tinytapeout.com/) to connect to the 
+[tt-commander-app](https://github.com/TinyTapeout/tt-commander-app)
+
 ---
 
 ## How to test
