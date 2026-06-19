@@ -373,8 +373,9 @@ esp_err_t ulx3s_spi_reset_config_registers(void)
 /*
 *  Self check diagnostics
 */
+#define ULX3S_SPI_SELF_CHECK_TRNG_ENABLE        0x01U
 #define ULX3S_SPI_SELF_CHECK_TRNG_SRC           3U
-#define ULX3S_SPI_SELF_CHECK_TRNG_DIV           0x10U
+#define ULX3S_SPI_SELF_CHECK_TRNG_DIV           0x01U
 #define ULX3S_SPI_SELF_CHECK_TRNG_MODE          0x00U
 #define ULX3S_SPI_SELF_CHECK_TRNG_OSCEN         0xFFU
 #define ULX3S_SPI_SELF_CHECK_TRNG_SAMPLES       8U
@@ -463,6 +464,11 @@ static esp_err_t ulx3s_spi_restore_trng_regs(const uint8_t saved_regs[ULX3S_SPI_
 
     first_err = ESP_OK;
 
+    ret = ulx3s_spi_write_reg(TT_REG_CTRL, ULX3S_REG_CTRL_DEFAULT);
+    if ((ret != ESP_OK) && (first_err == ESP_OK)) {
+        first_err = ret;
+    }
+
     ret = ulx3s_spi_write_reg(TT_REG_SRC, saved_regs[TT_REG_SRC]);
     if ((ret != ESP_OK) && (first_err == ESP_OK)) {
         first_err = ret;
@@ -508,6 +514,12 @@ static esp_err_t ulx3s_spi_check_trng_raw_changes(
 
     ESP_LOGI(TAG, "SPI self-check: enabling TRNG source for R6/R7 raw-change check");
 
+    ret = ulx3s_spi_write_reg(TT_REG_CTRL, ULX3S_REG_CTRL_DEFAULT);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "SPI self-check failed to write R0 CTRL disable: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
     ret = ulx3s_spi_write_reg(TT_REG_SRC, ULX3S_SPI_SELF_CHECK_TRNG_SRC);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "SPI self-check failed to write R1 SRC: %s", esp_err_to_name(ret));
@@ -531,6 +543,13 @@ static esp_err_t ulx3s_spi_check_trng_raw_changes(
     ret = ulx3s_spi_write_reg(TT_REG_OSCEN, ULX3S_SPI_SELF_CHECK_TRNG_OSCEN);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "SPI self-check failed to write R4 OSCEN: %s", esp_err_to_name(ret));
+        (void)ulx3s_spi_restore_trng_regs(saved_regs);
+        return ret;
+    }
+
+    ret = ulx3s_spi_write_reg(TT_REG_CTRL, ULX3S_SPI_SELF_CHECK_TRNG_ENABLE);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "SPI self-check failed to write R0 CTRL enable: %s", esp_err_to_name(ret));
         (void)ulx3s_spi_restore_trng_regs(saved_regs);
         return ret;
     }
@@ -563,9 +582,10 @@ static esp_err_t ulx3s_spi_check_trng_raw_changes(
         }
 
         ESP_LOGI(TAG,
-            "SPI self-check raw sample %u: raw=0x%04X status=0x%02X src=%u div=0x%02X mode=0x%02X oscen=0x%02X",
+            "SPI self-check raw sample %u: raw=0x%04X ctrl=0x%02X status=0x%02X src=%u div=0x%02X mode=0x%02X oscen=0x%02X",
             (unsigned int)sample,
             raw,
+            regs[TT_REG_CTRL],
             regs[TT_REG_STATUS],
             (unsigned int)regs[TT_REG_SRC],
             regs[TT_REG_DIV],
@@ -663,6 +683,7 @@ esp_err_t ulx3s_spi_self_check_regs_once(void)
     fail_count = 0U;
 
     ESP_LOGI(TAG, "SPI self-check: reading all known registers");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
 
     ret = ulx3s_spi_read_regs(regs);
     if (ret != ESP_OK) {
