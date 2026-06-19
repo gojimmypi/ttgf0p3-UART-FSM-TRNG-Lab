@@ -221,30 +221,22 @@ static esp_err_t trng_demo(void)
     return ESP_OK;
 } /* trng_demo */
 
-/* entry point */
-void app_main(void)
-{
-    esp_err_t ret;
-    int stack_start = 0;
+/*
+* ------------------------------------------------------------------------------
+* Print project config summary, macro values from TT Verilog, etc.
+* ------------------------------------------------------------------------------
+*/
+static int plain_text_project_summary() {
+    int ret = 0;
 
-    ESP_LOGI(TAG, "------------------- ULX3S ESP32 Example ----------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
+    printf("TT project_config.v effective settings (excludes project.v)")
+    printf("-----------------------------------------------------------")
+    /* Generate an update with:
+    *   ./show_effective_defines.sh  ../src/project_config.v  --header tt_effective_defines.h
+    */
     ret = tt_macro_list();
+    printf("-----------------------------------------------------------")
 
-    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
-
-    /* all platforms: stack high water mark check */
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-#ifdef TT_MACRO_VERSION_STRING
-    printf("Tiny Tapeout %s\n", TT_MACRO_VERSION_STRING);
-#else
-    printf("Tiny Tapeout (version unknown)\n");
-#endif
 
     /* Print chip information */
     esp_chip_info_t chip_info;
@@ -270,6 +262,35 @@ void app_main(void)
         (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
+    return ret;
+}
+
+/* entry point */
+void app_main(void)
+{
+    esp_err_t ret;
+    int stack_start = 0;
+
+    ESP_LOGI(TAG, "------------------- ULX3S ESP32 Example ----------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+
+    /* all platforms: stack high water mark check */
+    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
+
+    ret = plain_text_project_summary()
+
+#ifdef TT_MACRO_VERSION_STRING
+    ESP_LOGI(TAG, "Tiny Tapeout %s\n", TT_MACRO_VERSION_STRING);
+#else
+    ESP_LOGW(TAG, "Tiny Tapeout (version unknown)\n");
+#endif
+
+
 
     ret = ulx3s_spi_init();
     if (ret != ESP_OK) {
