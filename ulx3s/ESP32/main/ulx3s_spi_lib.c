@@ -1019,7 +1019,19 @@ esp_err_t ulx3s_spi_self_check_regs_once(void)
     pass_count = 0U;
     fail_count = 0U;
 
+    ESP_LOGI(TAG, "SPI self-check: resetting config registers to known defaults");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+
+    ret = ulx3s_spi_reset_config_registers();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "SPI self-check reset failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(ULX3S_SPI_SELF_CHECK_TRNG_SETTLE_MS));
+
     ESP_LOGI(TAG, "SPI self-check: reading all known registers");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
 
     ret = ulx3s_spi_read_regs(regs);
     if (ret != ESP_OK) {
@@ -1159,6 +1171,12 @@ void ulx3s_spi_apply_default_config_once(void)
     ret = ulx3s_spi_write_reg(TT_REG_OSCEN, 0x01U);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "ulx3s_spi_write_reg failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    ret = ulx3s_spi_reset_config_registers();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "ulx3s_spi_reset_config_registers failed: %s", esp_err_to_name(ret));
         return;
     }
 
