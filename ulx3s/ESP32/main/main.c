@@ -196,7 +196,7 @@ static esp_err_t trng_pin_regs_demo(void)
 
     ESP_LOGI(TAG,
         "pin regs: R8 UI_IN=0x%02X R9 UO_OUT=0x%02X "
-        "R10 UIO_IN=0x%02X R11 UIO_OUT=0x%02X R12 UIO_OE=0x%02X",
+        "RA UIO_IN=0x%02X RB UIO_OUT=0x%02X RC UIO_OE=0x%02X",
         pins.ui_in,
         pins.uo_out,
         pins.uio_in,
