@@ -54,7 +54,7 @@
 #include "main.h"
 
 #include "ulx3s_spi_lib.h"
-#include "fpga_trng.h"
+#include "tt_trng.h"
 
 /* ESP-IDF */
 #include "sdkconfig.h"

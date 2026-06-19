@@ -19,7 +19,7 @@
 /* Espressif */
 #include <esp_err.h>
 
-#include "fpga_trng.h"
+#include "tt_trng.h"
 
 /* Generated defined from src/project_config.v
  *   ./show_effective_defines.sh  ../src/project_config.v  --header tt_effective_defines.h

@@ -4,13 +4,13 @@
  *
  * See ATTRIBUTION.md for third-party sources and credits.
  *
- * file: ./ulx3s/ESP32/main/fpga_trng.c
+ * file: ./ulx3s/ESP32/main/tt_trng.c
  *
  * ESP32 ulx3s_spi_lib FPGA SPI library
  *
  */
 
-#include "fpga_trng.h"
+#include "tt_trng.h"
 
 #include "esp_check.h"
 #include "esp_log.h"
