@@ -35,6 +35,15 @@ See presentations:
 - [NIST Standards on Random Bit Generation](https://csrc.nist.gov/csrc/media/Presentations/2023/overview-of-nist-rng-standards-90a-90b-90c-22/images-media/session-1-turan-overview-talk.pdf) slides. 
 - [Why Random Numbers for Cryptography?](https://csrc.nist.gov/csrc/media/events/random-number-generation-workshop-2004/documents/developmenthistory.pdf)
 
+## SPI vs JTAG Special Note
+
+| Build / board |                 Physical setting | `ui_in[4]` | `debug_is_jtag` | Active interface |
+| ------------- | -------------------------------: | ---------: | --------------: | ---------------- |
+| TT Demoboard  |           INPUT `SW4/IN4` up/off |        `0` |             `0` | SPI              |
+| TT Demoboard  |          INPUT `SW4/IN4` down/on |        `1` |             `1` | JTAG             |
+| ULX3S         | `gp4` high / unconnected pull-up |        `1` |             `0` | SPI              |
+| ULX3S         |                 `gp4` pulled low |        `0` |             `1` | JTAG             |
+
 For additional related information:
 
 https://gojimmypi.github.io/trng/
@@ -254,9 +263,12 @@ Soft External UART:
 
 Soft SPI:
 
-Set `shared_spi_jtag_select` = 0
+Select SPI by leaving TT `IN4` up/off, or leaving ULX3S `gp4` high/unconnected/pull-up.
 
-This is already connected to the on-board ESP32 but for debugging reference:
+- For TT boards, `INPUT` Dip Switch `IN4` up/off gives `ui_in[4] = 0`, selecting SPI.
+- For ULX3S, `gp4` high/unconnected/pull-up gives `shared_spi_jtag_select = 1`, selecting SPI.
+
+Pins are already connected to the on-board ESP32 - but for debugging reference:
 
 - `GND` on `J1` pin 5; Ground connection. Beware of adjacent `3v3` on `J1` pins 1 and 2.
 - `GN2` -> (TT `uio[0]`) TMS
@@ -266,6 +278,8 @@ This is already connected to the on-board ESP32 but for debugging reference:
 
 See `/ulx3s/ESP32/main/ulx3s_spi_lib.c`
 
+&#x26A0;  Do not accidentally wire ESP32 `GPIO2` to PMOD `GP2`. `GPIO2` goes to `GN3`, because it is `MISO`/`TDO`. 
+Also be careful around`J1`: use pin 5 `GND`, not the adjacent `3v3` pins 1/2.
 
 ULX3S ESP32:
 
@@ -871,7 +885,7 @@ The TRNG lab core internally resets the LFSR to `0x1ACE`, clears `sample_shift`,
 | Pin | Direction | Function |
 | --- | --- | --- |
 | `ui_in[7:5]` | Input | Reserved / unused |
-| `ui_in[4]`   | Input | SPI/JTAG select, 1 = SPI, 0 = JTAG (when JTAG_ENABLED is defined) |
+| `ui_in[4]`   | Input | SPI/JTAG select, 0 = SPI, 1 = JTAG (`INPUT` Dip Switch `SW4` down; when JTAG_ENABLED is defined) |
 | `ui_in[3]`   | Input | UART RX |
 | `ui_in[2:0]` | Input | Reserved / unused |
 

@@ -16,7 +16,7 @@
  *
  * Pin usage in this wrapper:
  * - ui_in[7:5]   : reserved for future use, currently ignored
- * - ui_in[4]     : SPI/JTAG select, 1 = SPI, 0 = JTAG (when JTAG_ENABLED defined)
+ * - ui_in[4]     : SPI/JTAG select, 0 = SPI, 1 = JTAG (when JTAG_ENABLED defined)
  * - ui_in[3]     : UART RX input to the core
  * - ui_in[2:1]   : reserved for future use, currently ignored
  * - ui_in[0]     : Optional DEBUG_PAGE_SELECT
@@ -162,7 +162,7 @@ module tt_um_main
     wire jtag_tms;
     wire jtag_tdi;
     wire jtag_tdo;
-    wire debug_is_jtag;
+    wire debug_is_jtag; /* note special cases of ULX3S vs TT Demoboard */
 `endif
 
 `ifdef TRNG_HEALTH_STATUS_DEBUG_PAGE_SELECT
@@ -272,18 +272,29 @@ module tt_um_main
      * Synchronize asynchronous SPI/JTAG select input to the local clock domain.
      *
      * ui_in[4] selects who owns uio[3:0]:
-     * - 1 = SPI
-     * - 0 = JTAG
+     * - 0 = SPI
+     * - 1 = JTAG
      *
      * The external mode-select pin is asynchronous to clk and should not
      * directly control the JTAG enable or SPI/JTAG register mux.
      */
     always @(posedge clk) begin
         if (!rst_sync_n) begin
+        `ifdef ULX3S
+            /* The default, unconnected gp4 on the ULX3S is high, 
+             * reset sets debug mode to 1 for SPI */
             debug_sel_meta <= 1'b1;
             debug_sel_sync <= 1'b1;
+        `else
+            /* The TT Demoboard is 0 with SW4 in "up" position for SPI default,
+             * set to zero at reset time for SPI */
+            debug_sel_meta <= 1'b0;
+            debug_sel_sync <= 1'b0;
+        `endif
         end else begin
-            debug_sel_meta <= ui_in[4];
+            /* Note debug_is_jtag = debug_sel_sync
+             * conditionally inverted depending on platform! */
+            debug_sel_meta <= ui_in[4]; /* SPI = 0 (default, TT SW4 dip switch "up" = 0), 1 = JTAG */
             debug_sel_sync <= debug_sel_meta;
         end
     end
@@ -427,9 +438,15 @@ module tt_um_main
 `endif
 
 `ifdef JTAG_ENABLED
-    /* ui_in[4] = 1: ESP32 SPI owns uio[3:0] (default, unconnected = 1: PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;)
-     * ui_in[4] = 0: external JTAG header owns uio[3:0] */
-    assign debug_is_jtag = ~debug_sel_sync; /* invert logic since pull-up default on ULX3S wrapper means unconnected = SPI (not JTAG)  */
+    `ifdef ULX3S
+        /* ui_in[4] = 1: ESP32 SPI owns uio[3:0] (default, unconnected = 1: PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;)
+         * ui_in[4] = 0: external JTAG header owns uio[3:0], need to manually pull GP4 low */
+        assign debug_is_jtag = ~debug_sel_sync; /* invert logic since pull-up default on ULX3S wrapper means unconnected = SPI (not JTAG)  */
+    `else
+        /* ui_in[4] = 0: ESP32 SPI owns uio[3:0] (TT default, INPUT Switch SW4 "up" = 0)
+         * ui_in[4] = 1: external JTAG header owns uio[3:0], need to manually set TT INPUT SW4 "down" */
+        assign debug_is_jtag = debug_sel_sync; /* NOT inverted logic since pull-up default on TT board INPUT dip switch default "up" = 0 (SPI), down=on JTAG  */
+    `endif
 
     /* TODO: what happens with unconnected TT pin? */
 
