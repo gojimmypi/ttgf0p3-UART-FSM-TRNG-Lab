@@ -76,7 +76,7 @@ echo "**************************************************************************
 "$TT_TOOLS"/tt_fpga.py harden || exit 1
 
 echo "**************************************************************************"
-echo "Build complete, proceeding to flash..."
+echo "Build complete, TT_PORT = $TT_PORT - proceeding to flash..."
 echo "**************************************************************************"
 
 # Flash
