@@ -64,7 +64,7 @@
 # Use the --port option to change the target serial port
 #    --port /dev/ttyS4
 #
-PORT=/dev/ttyS12
+PORT=/dev/ttyS7
 
 # Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:

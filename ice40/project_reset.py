@@ -23,6 +23,10 @@ port = MY_PORT
 
 TT_TOP_NAME = os.environ.get("TT_TOP_NAME") or ""
 
+THIS_TOP_NAME = TT_TOP_NAME or "(unknown name)"
+
+print(f"Configuring and resetting board for {THIS_TOP_NAME} on TT repl port: {port}")
+
 if not TT_TOP_NAME:
     print("ERROR: TT_TOP_NAME is not set, do you need to run `source env_ice40.sh` ?")
     sys.exit(1)
