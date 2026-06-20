@@ -40,6 +40,10 @@
  *     gp[2] -> uio[1] JTAG TDI
  *     gn[3] <- uio[2] JTAG TDO
  *     gp[3] -> uio[3] JTAG TCK
+ *
+ * ULX3S External UART on gp0 and gp1
+ *    gp[0]  -> Soft UART Rx (ULX3S J1 Pin 6; connect to external USB TTY Tx)
+ *    gp[1]  -> Soft UART Tx (ULX3S J1 Pin 5; connect to external USB TTY Rx)
  */
 `default_nettype none
 `timescale 1ns/1ps
