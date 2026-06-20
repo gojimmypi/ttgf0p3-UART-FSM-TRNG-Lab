@@ -79,6 +79,8 @@ Once connected, there should be a [Python REPL command prompt](https://tinytapeo
 
 Don't confuse the TT board serial connection with the external UART.
 
+Ensure all the dip input switches are in the `up` default (off) position.
+
 Select project, set clock to 25 MHZ, and reset (see [project_reset.py](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/blob/main/ice40/project_reset.py):
 
 ```
@@ -146,6 +148,8 @@ Then you can send commands to configure the TRNG and read back entropy samples.
 
 &#x26A0; The TT Build is Case Sensitive. Although there are case-insensitive settings available for local FPGA builds, 
 they have been disabled for TT ASIC due to observed increased slew and setup violations.
+
+Type `RD` and press enter to view the Build Target ID. The expected value for GF180 ASIC is 42.
 
 Send the appropriate commands to configure and read from the TRNG core. See [Register Overview](./info.md#register-overview), below.
 
@@ -236,22 +240,54 @@ From [youtube.com/shorts/zFnfsl1DQHE](https://www.youtube.com/shorts/zFnfsl1DQHE
 
 ### Quickstart Testing on ULX3S
 
+See the `[project]/ulx3s` and `[project]/test-hw` directories.
+
+#### ULX3S Connections
+
+All pins are 3v3 and assumed to NOT be 5v tolerant.
+
+Soft UART:
+
+- `GND` on `J1` pin 4; Ground connection. Beware of adjacent `3v3` on `J1` pins 1 and 2.
+- `GP0` for `Rx` (connect to external UART `Tx`)
+- `GP1` for `Tx` (connect to external UART `Rx`)
+
+Soft SPI:
+
+Set `shared_spi_jtag_select` = 0
+
+- `GND` on `J1` pin 5; Ground connection. Beware of adjacent `3v3` on `J1` pins 1 and 2.
+- `GN2` -> (TT `uio[0]`) TMS
+- `GP2` -> (TT `uio[1]`) TDI
+- `GN3` <- (TT `uio[2]`) TDO
+- `GP3` -> (TT `uio[3]`) TCK
+
+![ULX3S-Pin-Connections.jpg](./ULX3S-Pin-Connections.jpg)
+
+Build and run tests from the `./test-hw` directory.
+
 ```bash
 cd /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/test-hw
 
 # may need to remove generated file
 rm  ../src/_tt_fpga_top.v
 
+# Edit board version as needed, tested on older v3.0.7:
 ./run_tests.sh  --with-build  --ulx3s-board-version v307  --ignore-combinational-warning  --no-warning-pause  --port /dev/ttyS12 --pause-for-test
 ```
 
 ### Quickstart on ULX3S ESP32
 
+The onboard ESP32 is pre-configured to work with this TT project. No external wiring is needed.
+
 ```bash
+# [project]/ulx3s/ESP32
 cd /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ulx3s/ESP32
 
-idf.py -p /dev/ttyS3 -b 115200 flash
-idf.py -p /dev/ttyS3 -b 115200 monitor
+PORT=/dev/ttyS3
+
+idf.py -p $PORT -b 115200 flash
+idf.py -p $PORT -b 115200 monitor
 ```
 
 See also [Comprehensive Testing](./info.md#comprehensive-testing) below and the [TT MicroPython SDK v3](https://github.com/TinyTapeout/tt-micropython-firmware#initialization).
@@ -637,8 +673,8 @@ cd test-hw
 
 ## UART FSM TRNG Lab Datasheet
 
-Document revision: 0.1.7
-RTL revision string: `Version 0.1.7 6/7/2026`  
+Document revision: 1.0.5
+RTL revision string: `Version 1.0.5 6/21/2026`  
 Project family: Tiny Tapeout UART/SPI configurable TRNG experiment  
 Primary top modules: `tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab` (conditional based on build)
 License: Apache-2.0, as declared in the source files
@@ -861,7 +897,7 @@ Invalid syntax returns `?<CR>`.
 #### UART command examples
 
 ```text
-V<CR>       -> Version 0.1.7 6/7/2026<CR>
+V<CR>       -> Version 1.0.5 6/21/2026<CR>
 R2<CR>      -> R2=10<CR>
 E1<CR>      -> OK<CR>
 D10<CR>     -> OK<CR>
