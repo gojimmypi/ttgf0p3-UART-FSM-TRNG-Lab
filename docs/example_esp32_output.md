@@ -8,7 +8,10 @@ This is the example output for the [ESP32 example app](https://github.com/gojimm
 on the [Radiona ULX3S FPGA](https://radiona.org/ulx3s/) 
 for the [Hardware Entropy Explorer: UART/SPI TRNG and PUF](https://app.tinytapeout.com/projects/4337) project.
 
-The source code for this test is in [`ulx3s/ESP32`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/ulx3s/ESP32)
+The source code for this test is in [`ulx3s/ESP32`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/ulx3s/ESP32).
+
+Users of the [VisualGDB](https://visualgdb.com/) Extension for Visual Studio can 
+find a project file in [ulx3s/ESP32/VisualGDB](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/ulx3s/ESP32/VisualGDB)
 
 ```text
 gojimmypi:/mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ulx3s/ESP32
