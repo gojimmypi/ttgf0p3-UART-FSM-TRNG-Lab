@@ -39,6 +39,10 @@ cd /mnt/c/SysGCC/esp32-master/esp-idf/v5.5
 source ./export.sh
 
 cd "$TT_PROJECT_ROOT/ulx3s/ESP32"
+
+# Clean if needed
+idf.py fullclean
+
 idf.py build
 
 # For hands-off programming, be sure to define ESP32_BOOT_RTS_DTR_ENABLED in the ULX3S Makefile
