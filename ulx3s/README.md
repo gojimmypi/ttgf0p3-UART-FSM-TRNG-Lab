@@ -91,7 +91,7 @@ ACPI x64-based PC
 
 The ULX3S and UART should appear something like this:
 
-![windows-device-manager-ports.png](../docs/windows-device-manager-ports.png)
+![windows-device-manager-ports.png](./images/windows-device-manager-ports.png)
 
 ## GTK Wave
 
