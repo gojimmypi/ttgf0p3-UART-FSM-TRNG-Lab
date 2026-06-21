@@ -2,6 +2,8 @@
 
 # Tiny Tapeout Project: ttgf-UART-FSM-TRNG-Lab
 
+Version 1.0.5 6/21/2026
+
 Details of this project are located in [docs/info.md](./docs/info.md)
 
 This project is part of [Tiny Tapeout GF 26a](https://app.tinytapeout.com/shuttles/ttgf26a) shuttle in [Project #4337](https://app.tinytapeout.com/projects/4337).
