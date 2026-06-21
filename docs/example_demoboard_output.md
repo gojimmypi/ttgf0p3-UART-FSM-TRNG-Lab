@@ -1,22 +1,37 @@
-# Example Test Results
+# Example Demoboard Output
 
 <!--- # Do not move this file. Referenced by TT 4337 Documentation https://app.tinytapeout.com/projects/4337 --->
 
 <!--- # Use only Fully Qualified URLs. This file is copied out of the GitHub repo for publication. --->
 
-This is the example output for the [Radiona ULX3S FPGA](https://radiona.org/ulx3s/) 
+This is the example output for the [Tiny Tapeout FPGA Demoboard](https://tinytapeout.com/guides/get-started-demoboard-etr/) 
 for the [Hardware Entropy Explorer: UART/SPI TRNG and PUF](https://app.tinytapeout.com/projects/4337) project.
 
-The source code for this test is in [`ulx3s`](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/ulx3s)
+The source code for this test is in [ice40](`https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/tree/main/ice40`).
 
 ```text
+gojimmypi:/mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
+$ ./build_and_flash.sh
+
+[ ..snip ..]
+
+Info: Program finished normally.
+2026-06-19 09:03:17,970 - tt_fpga    - INFO     - Bitstream created successfully: /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/build/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.bin
+**************************************************************************
+Build complete, proceeding to flash...
+**************************************************************************
+Uploading build/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.bin
+cp build/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.bin :/bitstreams/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.bin
+cp :/config.ini /tmp/ttconf-wtjyr0p2.tmp
+cp /tmp/ttconf-wtjyr0p2.tmp :/config.ini
+Completed with TT_PORT: /dev/ttyS6
+/mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
 gojimmypi:/mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
 $ ./run_tests.sh
 **************************************************************************
 **  Begin ./run_tests.sh from /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
-This test requires external UART TTY connected to TT RX == IN3, TX == OUT0
 **************************************************************************
-TT_UART_PORT: /dev/ttyS8
+TT_UART_PORT: /dev/ttyS5
 TT_PORT:      /dev/ttyS6
 **************************************************************************
 **  Setup environment
@@ -33,14 +48,13 @@ TT_PROJECT_ROOT:      /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab
 TT_TOP_NAME:          tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
 TT_TOOLS:             /mnt/c/workspace/tt-support-tools-gojimmypi
 **************************************************************************
-**  Calling project reset script on TT Port /dev/ttyS6
+**  Calling project reset script on port /dev/ttyS6
 **************************************************************************
 **************************************************************************
 **  Begin ./project_reset.sh from /mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
 **************************************************************************
 TT_PORT:     /dev/ttyS6
 TT_TOP_NAME: tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
-Configuring and resetting board for tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab on TT repl port: /dev/ttyS6
 >>> tt.shuttle.tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.enable()
 tt.shuttle.tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.enable()
 ttboard.fpga.fpga_mux: Enable design tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab
@@ -67,14 +81,14 @@ ttboard.demoboard: Changing reset to output mode
 tt.reset_project(False)
 >>>
 **************************************************************************
-**  Calling test scripts on UART Port /dev/ttyS8
+**  Calling test scripts on port /dev/ttyS5
 **************************************************************************
-Expected version: Version 1.0.5 6/21/2026
+Expected version: Version 1.0.4 6/18/2026
 
 Skipping register reset. Use --reset-registers to start from configured defaults.
 
 Running: version_if_present
-Version probe response: b'Version 1.0.5 6/21/2026\r'
+Version probe response: b'Version 1.0.4 6/18/2026\r'
 PASS: Version command exact match
 
 Running: power_on_defaults
@@ -136,7 +150,7 @@ Tests skipped: 0
 Tests failed: 0
 
 PASS
-Expected version: Version 1.0.5 6/21/2026
+Expected version: Version 1.0.4 6/18/2026
 
 Running: reset_config_registers
 PASS: Reset E0
@@ -148,7 +162,7 @@ PASS: Reset M00
 PASS: Reset O01
 
 Running: version_if_present
-Version probe response: b'Version 1.0.5 6/21/2026\r'
+Version probe response: b'Version 1.0.4 6/18/2026\r'
 PASS: Version command exact match
 
 Running: power_on_defaults
@@ -299,36 +313,36 @@ PASS: Configure oscillator mask
 PASS: Configure divider
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 01: 0x07B5
+  sample 01: 0xCC94
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 02: 0xBB24
+  sample 02: 0xE78E
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 03: 0xBB92
+  sample 03: 0xB264
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 04: 0xE68B
+  sample 04: 0x6390
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 05: 0xC84C
+  sample 05: 0xE20B
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 06: 0xCB50
+  sample 06: 0xD938
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 07: 0x652D
+  sample 07: 0x8F2C
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 08: 0xD1D3
+  sample 08: 0x3F7F
 
 Evaluation: TRNG S0 LFSR frozen samples
   Samples:      8
   Unique:       8
   Zero samples: 0
   0xFFFF count: 0
-  One bits:     64/128
-  One ratio:    0.500
+  One bits:     66/128
+  One ratio:    0.516
 PASS: sample output changes
 PASS: bit balance is reasonable for this small sample set
 
@@ -339,36 +353,36 @@ PASS: Configure oscillator mask
 PASS: Configure divider
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 01: 0x33CC
+  sample 01: 0x1E01
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 02: 0xCF03
+  sample 02: 0xFC0F
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 03: 0x00F0
+  sample 03: 0x199F
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 04: 0x3FFC
+  sample 04: 0x3C03
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 05: 0x3C3F
+  sample 05: 0xF303
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 06: 0x0FC0
+  sample 06: 0x033C
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 07: 0xFC3F
+  sample 07: 0x0CF0
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 08: 0x6787
+  sample 08: 0x0FCC
 
 Evaluation: TRNG S1 RO0/fallback path
   Samples:      8
   Unique:       8
   Zero samples: 0
   0xFFFF count: 0
-  One bits:     69/128
-  One ratio:    0.539
+  One bits:     58/128
+  One ratio:    0.453
 PASS: sample output changes
 PASS: bit balance is reasonable for this small sample set
 
@@ -379,36 +393,36 @@ PASS: Configure oscillator mask
 PASS: Configure divider
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 01: 0xE781
+  sample 01: 0xC000
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 02: 0xE001
+  sample 02: 0x67E6
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 03: 0x33F0
+  sample 03: 0x0798
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 04: 0xF99E
+  sample 04: 0xF300
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 05: 0x8180
+  sample 05: 0xF0FF
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 06: 0xCCCF
+  sample 06: 0x9861
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 07: 0x030F
+  sample 07: 0x0000
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 08: 0xF03C
+  sample 08: 0xF987
 
 Evaluation: TRNG S2 ROX/fallback path
   Samples:      8
   Unique:       8
-  Zero samples: 0
+  Zero samples: 1
   0xFFFF count: 0
-  One bits:     58/128
-  One ratio:    0.453
+  One bits:     52/128
+  One ratio:    0.406
 PASS: sample output changes
 PASS: bit balance is reasonable for this small sample set
 
@@ -419,28 +433,28 @@ PASS: Configure oscillator mask
 PASS: Configure divider
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 01: 0x799E
+  sample 01: 0x9E00
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 02: 0x3030
+  sample 02: 0x8018
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 03: 0x807F
+  sample 03: 0xF0F0
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 04: 0x0033
+  sample 04: 0x0FF0
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 05: 0x0606
+  sample 05: 0xC3C3
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 06: 0xF003
+  sample 06: 0x81E1
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 07: 0xFF30
+  sample 07: 0x33CC
 PASS: Enable sampling
 PASS: Freeze sampling
-  sample 08: 0xF999
+  sample 08: 0xF30F
 
 Evaluation: TRNG S3 MIX/fallback path
   Samples:      8
@@ -487,7 +501,7 @@ Sequence quality check:
 PASS: deterministic sequence is not stuck
 
 PASS
-Expected version: Version 1.0.5 6/21/2026
+Expected version: Version 1.0.4 6/18/2026
 
 Running: reset_config_registers
 PASS: Reset E0
@@ -499,7 +513,7 @@ PASS: Reset M00
 PASS: Reset O01
 
 Running: version_if_present
-Version probe response: b'Version 1.0.5 6/21/2026\r'
+Version probe response: b'Version 1.0.4 6/18/2026\r'
 PASS: Version command exact match
 
 Running: power_on_defaults
@@ -573,7 +587,7 @@ PASS
 **************************************************************************
 **  Done. Ports used:
 **************************************************************************
-TT_UART_PORT: /dev/ttyS8
+TT_UART_PORT: /dev/ttyS5
 TT_PORT:      /dev/ttyS6
 gojimmypi:/mnt/c/workspace/ttgf-UART-FSM-TRNG-Lab/ice40
 $

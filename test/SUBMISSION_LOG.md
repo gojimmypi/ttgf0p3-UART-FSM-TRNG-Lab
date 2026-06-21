@@ -4,27 +4,27 @@ By the time this file has been edited, the contents here are for the *prior*, mo
 
 https://app.tinytapeout.com/projects/4337
 
-Version 1.0.3 6/16/2026
+Version 1.0.4 6/18/2026
 
-Tue Jun 16 2026 [0dd0886b](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/commit/0dd0886b5febb854e42d1ce68173723bcbb6b2ad)	
-1x2	[#103](https://github.com/TinyTapeout/tinytapeout-gf-26a/pull/103):
+Thu Jun 18 2026	[35ba940d](https://github.com/gojimmypi/ttgf-UART-FSM-TRNG-Lab/commit/35ba940d903d009e645e1ec9c2dd4e4393d1ff12)	
+1x2	[#110](https://github.com/TinyTapeout/tinytapeout-gf-26a/pull/110):
 
 ```
 🩺 Checking docs workflow result...
 
 🩺 Checking GDS workflow result...
 
-⬇️ Downloading tt_submission from https://api.github.com/repos/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/artifacts/7680625644 ...
+⬇️ Downloading tt_submission from https://api.github.com/repos/gojimmypi/ttgf-UART-FSM-TRNG-Lab/actions/artifacts/7741842379 ...
 
-Downloaded 4544555 bytes
+Downloaded 4736086 bytes
 
 Artifact contains 44 files:
 
 * src/JTAG/README.md
 
-* src/JTAG/jtag_core.v
-
 * src/PINS/README.md
+
+* src/JTAG/jtag_core.v
 
 * src/PINS/pin_id_core.v
 
@@ -82,9 +82,9 @@ Artifact contains 44 files:
 
 * tt_submission/commit_id.json
 
-* tt_submission/resolved.json
-
 * tt_submission/pdk.json
+
+* tt_submission/resolved.json
 
 * tt_submission/stats/metrics.csv
 
@@ -94,9 +94,9 @@ Artifact contains 44 files:
 
 * tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.lef
 
-* tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.max.spef
-
 * tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.min.spef
+
+* tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.max.spef
 
 * tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.nom.spef
 
@@ -104,31 +104,31 @@ Artifact contains 44 files:
 
 * tt_submission/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.v
 
-* LICENSE
-
 * info.yaml
+
+* LICENSE
 
 📚 Project PDK: gf180mcuD
 
-🔀 Branching projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab-27650388894 from 3fb15a51573d1903cecd72b1fac158d9b7d0bea8
+🔀 Branching projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab-27805658534 from 26274e13e001f2853a980e75626453b3874ec081
 
-⬆️ Creating commit on branch projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab-27650388894
+⬆️ Creating commit on branch projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab-27805658534
 
 -> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/commit_id.json
 
 -> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/info.yaml
 
--> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/docs/info.md (40727 bytes)
+-> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/docs/info.md (42122 bytes)
 
--> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.lef (17965 bytes)
+-> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.lef (18356 bytes)
 
--> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.v (1001615 bytes)
+-> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.v (996356 bytes)
 
--> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.oas (226541 bytes)
+-> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab.oas (234686 bytes)
 
 -> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/pdk.json (169 bytes)
 
--> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/stats/metrics.csv (15838 bytes)
+-> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/stats/metrics.csv (15794 bytes)
 
 -> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/stats/synthesis-stats.txt (5824 bytes)
 
@@ -142,9 +142,9 @@ Artifact contains 44 files:
 
 -> projects/tt_um_gojimmypi_ttgf_UART_FSM_TRNG_Lab/LICENSE (11357 bytes)
 
-📜 Committed, hash = 81c6cb88. Creating Pull Request...
+📜 Committed, hash = 2adb2fa9. Creating Pull Request...
 
-🆕 Pull Request created successfully: https://github.com/TinyTapeout/tinytapeout-gf-26a/pull/103
+🆕 Pull Request created successfully: https://github.com/TinyTapeout/tinytapeout-gf-26a/pull/110
 
 💌 Sending confirmation email to gojimmypi@gmail.com
 

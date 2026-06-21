@@ -11,15 +11,17 @@ set -o pipefail
 
 echo "**************************************************************************"
 echo "**  Begin ${BASH_SOURCE[0]} from ${PWD}"
+echo "This test requires external UART TTY connected to TT RX == IN3, TX == OUT0"
 echo "**************************************************************************"
 
-# Windows: PORT=COM5
-# WSL:     PORT=/dev/ttyS5
-# Linux:   PORT=/dev/ttyUSB5 or /dev/ttyACM5
-# macOS:   PORT=/dev/tty.usbserial-0005
+# Windows: PORT=COM8
+# WSL:     PORT=/dev/ttyS8
+# Linux:   PORT=/dev/ttyUSB8 or /dev/ttyACM8
+# macOS:   PORT=/dev/tty.usbserial-0008
 #
 # The TT_UART_PORT is the external USB TTY device, typically connected to IN3/Rx and OUT4/Tx.
-MY_TT_UART_PORT=/dev/ttyS5
+MY_TT_UART_PORT=/dev/ttyS8
+TT_PORT=/dev/ttyS6
 
 export TT_UART_PORT=${MY_TT_UART_PORT}
 
@@ -54,13 +56,13 @@ echo "**************************************************************************
 source ./env_ice40.sh
 
 echo "**************************************************************************"
-echo "**  Calling project reset script on port ${TT_PORT}"
+echo "**  Calling project reset script on TT Port ${TT_PORT}"
 echo "**************************************************************************"
 ./project_reset.sh || exit 1
 
 
 echo "**************************************************************************"
-echo "**  Calling test scripts on port ${TT_UART_PORT}"
+echo "**  Calling test scripts on UART Port ${TT_UART_PORT}"
 echo "**************************************************************************"
 
 python ../test-hw/tt_uart_test.py --port "$TT_UART_PORT"                   || exit 1

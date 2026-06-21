@@ -61,7 +61,10 @@
 #
 # Do not move this file. Referenced by TT 4337 Documentation https://app.tinytapeout.com/projects/4337
 
-PORT=/dev/ttyS12
+# Use the --port option to change the target serial port
+#    --port /dev/ttyS4
+#
+PORT=/dev/ttyS7
 
 # Run shellcheck to ensure this is a good script.
 # Specify the executable shell checker you want to use:
@@ -89,7 +92,8 @@ BUILD_ARGS=""
 # Extract expected version
 # ------------------------------------------------------------------------------
 EXPECTED_VERSION="$(../scripts/get_expected_version.sh)"
-echo "Expected version: $EXPECTED_VERSION"
+echo "Expected value: $EXPECTED_VERSION"
+
 # ------------------------------------------------------------------------------
 # Parameter processing
 # ------------------------------------------------------------------------------
@@ -272,7 +276,7 @@ fi
 # Optionally pause before tests to allow user to connect test equipment, etc.
 # ------------------------------------------------------------------------------
 if [ "$PAUSE_FOR_TEST" -eq 1 ]; then
-    read -r -p "Press Enter to continue..."
+    read -r -p "Ready to test external ULX3S UART () on port $PORT - Press Enter to continue ..."
 fi
 
 # ------------------------------------------------------------------------------

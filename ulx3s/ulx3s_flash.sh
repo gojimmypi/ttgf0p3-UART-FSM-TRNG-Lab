@@ -31,7 +31,7 @@ if [ ! -f "$BITFILE" ]; then
     echo "Error: bitstream file not found: $BITFILE"
     exit 1
 fi
-echo "Flashing file:"
+echo "Flashing file: $BITFILE"
 
 if command -v realpath >/dev/null 2>&1; then
     FULL_PATH="$(realpath "$BITFILE")"
@@ -42,10 +42,13 @@ fi
 
 ls -al "$FULL_PATH"
 
+
 if [ -n "$WSL_DISTRO_NAME" ]; then
+    echo "WSL Calling ./fujprog-v48-win64.exe (should auto-detect ULX3S port) ..."
     # we found a non-blank WSL environment distro name
     # This script is intended to be run inside WSL (Windows Subsystem for Linux) to program the ULX3S FPGA board using the fujprog tool.
-    ./fujprog-v48-win64.exe "$BITFILE"
+    ./fujprog-v48-win64.exe "$BITFILE" || exit 1
 else
-    ./fujprog "$BITFILE"
+    echo "Calling ./fujprog (should auto-detect ULX3S port) ..."
+    ./fujprog "$BITFILE" || exit 1
 fi

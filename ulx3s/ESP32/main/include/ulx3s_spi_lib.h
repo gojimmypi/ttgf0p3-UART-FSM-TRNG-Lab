@@ -14,17 +14,20 @@
 #define _ULX3S_SPI_LIB_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Espressif */
 #include <esp_err.h>
 
-#include "fpga_trng.h"
+#include "tt_trng.h"
 
- /* Generated defined from src/project_config.v */
-#include "tt_effective_defines_asic.h"
+/* Generated defined from src/project_config.v
+ *   ./show_effective_defines.sh  ../src/project_config.v  --header tt_effective_defines.h
+ */
+#include "tt_effective_defines.h"
 
-#ifndef TT_ASIC_MACRO_BIG16_SPI_REG
-    #error "missing TT_ASIC_MACRO_BIG16_SPI_REG?"
+#ifndef TT_MACRO_BIG16_SPI_REG
+    #error "missing TT_MACRO_BIG16_SPI_REG?"
 #endif
 
 /*
@@ -55,11 +58,33 @@
 #define TT_REG_RAWLO                            6U
 #define TT_REG_RAWHI                            7U
 
-#ifdef TT_ASIC_MACRO_BIG16_SPI_REG
-    #define ULX3S_SPI_REG_COUNT                     16U
+#ifdef TT_MACRO_BIG16_SPI_REG
+    /* Additional registers in BIG16_SPI_REG: */
+    #define TT_REG_UI_IN                        8U
+    #define TT_REG_UO_OUT                       9U
+    #define TT_REG_UIO_IN                       10U
+    #define TT_REG_UIO_OUT                      11U
+    #define TT_REG_UIO_OE                       12U
+    #define TT_REG_BUILD                        13U
+    #define TT_REG_UNUSED_D                     TT_REG_BUILD
+    #define TT_REG_UNUSED_E                     14U
+    #define TT_REG_UNUSED_F                     15U
+    #define ULX3S_SPI_REG_COUNT                    16U
 #else
+    /* Just the basic list, above */
     #define ULX3S_SPI_REG_COUNT                     8U
 #endif
+
+#define TT_BUILD_TARGET_UNKNOWN              0x00U
+#define TT_BUILD_TARGET_ASIC_SKY130          0x41U
+#define TT_BUILD_TARGET_ASIC_GF180           0x42U
+#define TT_BUILD_TARGET_FPGA                 0x81U
+#define TT_BUILD_TARGET_FPGA_ULX3S_12K       0x82U
+#define TT_BUILD_TARGET_FPGA_ULX3S_85F       0x83U
+#define TT_BUILD_TARGET_SIM                  0xF0U
+
+#define TT_BUILD_TARGET_CLASS_MASK           0xF0U
+#define TT_BUILD_TARGET_CLASS_FPGA           0x80U
 
 #define ULX3S_REG_CTRL_DEFAULT     0x00U
 #define ULX3S_REG_SRC_DEFAULT      0x00U
@@ -68,9 +93,13 @@
 #define ULX3S_REG_OSCEN_DEFAULT    0x01U
 
 
-esp_err_t ulx3s_spi_init(void);
+esp_err_t ulx3s_spi_init(bool verbose);
 
 esp_err_t ulx3s_spi_reset_config_registers(void);
+
+esp_err_t ulx3s_spi_self_check_regs_once(void);
+
+esp_err_t ulx3s_spi_characterize_ro_sources_once(void);
 
 esp_err_t ulx3s_spi_dump_regs(void);
 

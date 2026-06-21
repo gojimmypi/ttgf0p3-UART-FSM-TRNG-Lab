@@ -58,7 +58,7 @@ Arguments:
 Environment:
   PORT
       UART port to use.
-      Default: /dev/ttyS12
+      Default: /dev/ttyS07
 
   USE_FAST_BAUD
       Set to 0 to remove --fast-baud from capture_trng_raw_uart.py.

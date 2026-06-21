@@ -6,10 +6,10 @@
 # file: ice40/build_and_flash.sh
 #
 
-# Windows: PORT=COM5
-# WSL:     PORT=/dev/ttyS5
-# Linux:   PORT=/dev/ttyUSB5 or /dev/ttyACM5
-# macOS:   PORT=/dev/tty.usbserial-0005
+# Windows: PORT=COM6
+# WSL:     PORT=/dev/ttyS6
+# Linux:   PORT=/dev/ttyUSB6 or /dev/ttyACM6
+# macOS:   PORT=/dev/tty.usbserial-0006
 
 if [ -z "${MY_TT_PORT:-}" ]; then
     MY_TT_PORT="/dev/ttyS6"
@@ -76,7 +76,7 @@ echo "**************************************************************************
 "$TT_TOOLS"/tt_fpga.py harden || exit 1
 
 echo "**************************************************************************"
-echo "Build complete, proceeding to flash..."
+echo "Build complete, TT_PORT = $TT_PORT - proceeding to flash..."
 echo "**************************************************************************"
 
 # Flash

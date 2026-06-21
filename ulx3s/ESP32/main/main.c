@@ -4,7 +4,7 @@
  *
  * See ATTRIBUTION.md for third-party sources and credits.
  *
- * file: main.h
+ * file: main.c
  *
  * ESP32 main app
  *
@@ -16,6 +16,14 @@
  *
  *       assign wifi_en    = btn[0];
  *       assign wifi_gpio0 = btn[1];
+ *
+ * There's a "hand-off programming" RTL in `esp32_prog_ctrl.v`
+ * 
+ * See the related ESP32_BOOT_RTS_DTR_ENABLED in the Makefile (on by default)
+ * 
+ * ---------------------------------------------------------------------------------------------
+ * 
+ * When NOT using the `esp32_prog_ctrl.v`:
  *
  * If ESP32_BOOT_CONTROL_ENABLED is defined, BTN0 controls wifi_en and BTN1 controls wifi_gpio0
  *
@@ -31,7 +39,8 @@
  *      (begin flash upload)
  *    Release btn[0] when "Connecting..." is observed.
  *
- * Should then see something like:
+ * ---------------------------------------------------------------------------------------------
+ * At boot time, should then see something like:
  *
  *   Chip is ESP32-D0WDQ6 (revision v1.0)
  *   Features: WiFi, BT, Dual Core, 240MHz, VRef calibration in efuse, Coding Scheme None
@@ -45,7 +54,7 @@
 #include "main.h"
 
 #include "ulx3s_spi_lib.h"
-#include "fpga_trng.h"
+#include "tt_trng.h"
 
 /* ESP-IDF */
 #include "sdkconfig.h"
@@ -79,27 +88,43 @@
 
 static const char* const TAG = "main";
 
+static void main_log_section(const char* title)
+{
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "%s", title);
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+}
+
+/*
+* ------------------------------------------------------------------------------
+* 
+* ------------------------------------------------------------------------------
+*/
 static esp_err_t trng_lfsr_demo(void)
 {
     esp_err_t err;
-    fpga_trng_sample_t sample;
+    tt_trng_sample_t sample;
     int i;
 
     sample.status = 0U;
     sample.raw = 0U;
 
-    ESP_LOGI(TAG, "TRNG deterministic LFSR test");
+    main_log_section("TRNG deterministic LFSR test");
+    ESP_LOGI(TAG,
+        "TRNG LFSR purpose: verify the deterministic test-mode sequence still responds through the normal read path");
+    ESP_LOGI(TAG,
+        "TRNG LFSR expectation: samples should match the known firmware/RTL deterministic sequence");
 
-    err = fpga_trng_configure_lfsr_test_mode();
+    err = tt_trng_configure_lfsr_test_mode();
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "fpga_trng_configure_lfsr_test_mode failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "tt_trng_configure_lfsr_test_mode failed: %s", esp_err_to_name(err));
         return err;
     }
 
     for (i = 0; i < TRNG_DEMO_SAMPLE_COUNT; i++) {
-        err = fpga_trng_read_lfsr_sample(&sample);
+        err = tt_trng_read_lfsr_sample(&sample);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "fpga_trng_read_lfsr_sample failed: %s", esp_err_to_name(err));
+            ESP_LOGE(TAG, "tt_trng_read_lfsr_sample failed: %s", esp_err_to_name(err));
             return err;
         }
 
@@ -112,30 +137,44 @@ static esp_err_t trng_lfsr_demo(void)
     return ESP_OK;
 } /* trng_lfsr_demo */
 
+
+/*
+* ------------------------------------------------------------------------------
+*
+* ------------------------------------------------------------------------------
+*/
 static esp_err_t trng_live_source_demo(
     const char *name,
-    fpga_trng_source_t source,
+    tt_trng_source_t source,
     uint8_t oscillator_mask)
 {
     esp_err_t err;
-    fpga_trng_sample_t sample;
+    tt_trng_sample_t sample;
     int i;
 
     sample.status = 0U;
     sample.raw = 0U;
 
-    ESP_LOGI(TAG, "TRNG live source test: %s", name);
+    main_log_section("TRNG live source test");
+    ESP_LOGI(TAG,
+        "TRNG live source: %s source=%u divider=0x%02X oscen=0x%02X",
+        name,
+        (unsigned int)source,
+        0x01U,
+        oscillator_mask);
+    ESP_LOGI(TAG,
+        "TRNG live purpose: confirm this source selection produces changing raw/status samples through the tt_trng API");
 
-    err = fpga_trng_configure_live(source, 0x01U, oscillator_mask);
+    err = tt_trng_configure_live(source, 0x01U, oscillator_mask);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "fpga_trng_configure_live failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "tt_trng_configure_live failed: %s", esp_err_to_name(err));
         return err;
     }
 
     for (i = 0; i < TRNG_DEMO_SAMPLE_COUNT; i++) {
-        err = fpga_trng_read_live_sample(&sample);
+        err = tt_trng_read_live_sample(&sample);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "fpga_trng_read_live_sample failed: %s", esp_err_to_name(err));
+            ESP_LOGE(TAG, "tt_trng_read_live_sample failed: %s", esp_err_to_name(err));
             return err;
         }
 
@@ -149,10 +188,16 @@ static esp_err_t trng_live_source_demo(
     return ESP_OK;
 } /* trng_live_source_demo */
 
+/*
+* ------------------------------------------------------------------------------
+*
+* ------------------------------------------------------------------------------
+*/
+
 static esp_err_t trng_pin_regs_demo(void)
 {
     esp_err_t err;
-    fpga_trng_pin_regs_t pins;
+    tt_trng_pin_regs_t pins;
 
     pins.ui_in = 0U;
     pins.uo_out = 0U;
@@ -160,17 +205,21 @@ static esp_err_t trng_pin_regs_demo(void)
     pins.uio_out = 0U;
     pins.uio_oe = 0U;
 
-    ESP_LOGI(TAG, "TRNG SPI pin register test");
+    main_log_section("TRNG SPI pin register test");
+    ESP_LOGI(TAG,
+        "TRNG pin purpose: read SPI-visible snapshots R8/R9/RA/RB/RC and confirm the debug view of TT pins");
+    ESP_LOGI(TAG,
+        "TRNG pin expectation: RC should normally be 0xF4 with SPI enabled; R8 should include UART RX idle high");
 
-    err = fpga_trng_read_pin_regs(&pins);
+    err = tt_trng_read_pin_regs(&pins);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "fpga_trng_read_pin_regs failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "tt_trng_read_pin_regs failed: %s", esp_err_to_name(err));
         return err;
     }
 
     ESP_LOGI(TAG,
         "pin regs: R8 UI_IN=0x%02X R9 UO_OUT=0x%02X "
-        "R10 UIO_IN=0x%02X R11 UIO_OUT=0x%02X R12 UIO_OE=0x%02X",
+        "RA UIO_IN=0x%02X RB UIO_OUT=0x%02X RC UIO_OE=0x%02X",
         pins.ui_in,
         pins.uo_out,
         pins.uio_in,
@@ -186,6 +235,12 @@ static esp_err_t trng_pin_regs_demo(void)
     return ESP_OK;
 } /* trng_pin_regs_demo */
 
+/*
+* ------------------------------------------------------------------------------
+*
+* ------------------------------------------------------------------------------
+*/
+
 static esp_err_t trng_demo(void)
 {
     esp_err_t err;
@@ -195,17 +250,17 @@ static esp_err_t trng_demo(void)
         return err;
     }
 
-    err = trng_live_source_demo("S1 RO0/fallback", FPGA_TRNG_SOURCE_RO0, 0x01U);
+    err = trng_live_source_demo("S1 RO0/fallback", TT_TRNG_SOURCE_RO0, 0x01U);
     if (err != ESP_OK) {
         return err;
     }
 
-    err = trng_live_source_demo("S2 ROX/fallback", FPGA_TRNG_SOURCE_ROX, 0xFFU);
+    err = trng_live_source_demo("S2 ROX/fallback", TT_TRNG_SOURCE_ROX, 0xFFU);
     if (err != ESP_OK) {
         return err;
     }
 
-    err = trng_live_source_demo("S3 MIX/fallback", FPGA_TRNG_SOURCE_MIX, 0xFFU);
+    err = trng_live_source_demo("S3 MIX/fallback", TT_TRNG_SOURCE_MIX, 0xFFU);
     if (err != ESP_OK) {
         return err;
     }
@@ -213,25 +268,22 @@ static esp_err_t trng_demo(void)
     return ESP_OK;
 } /* trng_demo */
 
-/* entry point */
-void app_main(void)
-{
-    esp_err_t ret;
-    int stack_start = 0;
+/*
+* ------------------------------------------------------------------------------
+* Print project config summary, macro values from TT Verilog, etc.
+* ------------------------------------------------------------------------------
+*/
+static int plain_text_project_summary() {
+    int ret = 0;
 
-    ESP_LOGI(TAG, "------------------- ULX3S ESP32 Example ----------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "--------------------------------------------------------");
-    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+    printf("TT project_config.v effective settings (excludes project.v)\n");
+    printf("-----------------------------------------------------------\n");
+    /* Generate an update with:
+    *   ./show_effective_defines.sh  ../src/project_config.v  --header tt_effective_defines.h
+    */
+    ret = tt_macro_list();
+    printf("-----------------------------------------------------------\n");
 
-    /* all platforms: stack high water mark check */
-    ESP_LOGI(TAG, "Stack HWM: %d\n", uxTaskGetStackHighWaterMark(NULL));
-
-
-    printf("Hello world 3!\n");
 
     /* Print chip information */
     esp_chip_info_t chip_info;
@@ -248,21 +300,85 @@ void app_main(void)
     unsigned major_rev = chip_info.revision / 100;
     unsigned minor_rev = chip_info.revision % 100;
     printf("silicon revision v%d.%d, ", major_rev, minor_rev);
-    if (esp_flash_get_size(NULL, &flash_size) != ESP_OK) {
+    ret = esp_flash_get_size(NULL, &flash_size);
+    if (ret != ESP_OK) {
         printf("Get flash size failed");
-        return;
+        return ret;
     }
 
     printf("%" PRIu32 "MB %s flash\n", flash_size / (uint32_t)(1024 * 1024),
         (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
-    printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
+    return ret;
+}
 
-    ret = ulx3s_spi_init();
+/*
+* ------------------------------------------------------------------------------
+* Entry point
+* ------------------------------------------------------------------------------
+*/
+void app_main(void)
+{
+    esp_err_t ret;
+    int stack_start = 0;
+
+    ESP_LOGI(TAG, "------------------- ULX3S ESP32 Example ----------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "---------------------- BEGIN MAIN ----------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "--------------------------------------------------------");
+    ESP_LOGI(TAG, "Stack Start: 0x%x", stack_start);
+
+    /* stack high water mark check */
+    ESP_LOGI(TAG, "Stack HWM: %d", uxTaskGetStackHighWaterMark(NULL));
+    ESP_LOGI(TAG, "Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
+
+#ifdef ESP32_WAIT_BOOT_ONLY
+    /* Optional no SPI, quiet idle wait */
+    while(1) {
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+#endif
+    ret = plain_text_project_summary();
+
+#ifdef TT_MACRO_VERSION_STRING
+    ESP_LOGI(TAG, "Tiny Tapeout SPI Test %s", TT_MACRO_VERSION_STRING);
+#else
+    ESP_LOGW(TAG, "Tiny Tapeout SPI Test (version unknown)");
+#endif
+
+    main_log_section("Initialize ESP32 SPI bus");
+    ESP_LOGI(TAG,
+        "Main step: configure ESP32 SPI peripheral and attach the ULX3S FPGA SPI device");
+
+    ret = ulx3s_spi_init(true);
     if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize ULX3S SPI");
         return;
     }
 
+    main_log_section("Run SPI register self-check");
+    ESP_LOGI(TAG,
+        "Main step: validate R0-RF register map, pin snapshot registers, and active R6/R7 raw-change behavior");
+
+    ret = ulx3s_spi_self_check_regs_once();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "ulx3s_spi_self_check_regs_once failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    main_log_section("Run RO activity characterization");
+    ESP_LOGI(TAG,
+        "Main step: sweep one-hot oscillator enables in S2 and S3 modes and summarize activity statistics");
+
+    ret = ulx3s_spi_characterize_ro_sources_once();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "ulx3s_spi_characterize_ro_sources_once failed: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    main_log_section("Apply post-diagnostic SPI write policy");
 #if (ULX3S_SPI_WRITE_MODE == ULX3S_SPI_WRITE_MODE_BOOT_CONFIG_ONCE)
     ESP_LOGI(TAG, "SPI write mode: boot config once");
     ulx3s_spi_apply_default_config_once();
@@ -275,15 +391,27 @@ void app_main(void)
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
+    main_log_section("Run TRNG demo sequence");
+    ESP_LOGI(TAG,
+        "Main step: run deterministic LFSR plus S1/S2/S3 live-source demonstrations");
+
     ret = trng_demo();
     if (ret != ESP_OK) {
         return;
     }
 
+    main_log_section("Run SPI pin snapshot demo");
+    ESP_LOGI(TAG,
+        "Main step: read R8/R9/RA/RB/RC through tt_trng_read_pin_regs()");
+
     ret = trng_pin_regs_demo();
     if (ret != ESP_OK) {
         return;
     }
+
+    main_log_section("Restore default SPI config before monitor loop");
+    ESP_LOGI(TAG,
+        "Main step: reset R0-R4 to defaults and dump R0-RF before entering monitor loop");
 
     ret = ulx3s_spi_reset_config_registers();
     if (ret != ESP_OK) {
@@ -314,5 +442,4 @@ void app_main(void)
     printf("Restarting now.\n");
     fflush(stdout);
     esp_restart();
-
-}
+} /* app_main */

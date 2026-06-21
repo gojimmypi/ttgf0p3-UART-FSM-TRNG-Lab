@@ -1,5 +1,7 @@
 # ULX3S FPGA Wrapper for Tiny Tapeout
 
+Version 1.0.5 6/21/2026
+
 This directory includes a [top_ulx3s.v wrapper](./top_ulx3s.v) for testing the TT project on the [ULX3S FPGA board](https://www.crowdsupply.com/radiona/ulx3s). 
 
 See the separate [../test](../test) directory for testing native Tiny Tapeout.
@@ -91,7 +93,7 @@ ACPI x64-based PC
 
 The ULX3S and UART should appear something like this:
 
-![windows-device-manager-ports.png](../docs/windows-device-manager-ports.png)
+![windows-device-manager-ports.png](./images/windows-device-manager-ports.png)
 
 ## GTK Wave
 

@@ -19,10 +19,14 @@ PROJECT=myProjectDirectory
 
 cd "${myProjectDirectory}/scripts"
 
-./show_effective_defines.sh  ../src/project_config.v  --target asic  --header tt_effective_defines_asic.h
+./show_effective_defines.sh  ../src/project_config.v  --header tt_effective_defines.h
 ```
 
-Review the generated `tt_effective_defines_asic.h` and copy to `./ulx3s/ESP32/main/include`
+Review the generated `tt_effective_defines.h` and copy to `./ulx3s/ESP32/main/include`
+
+```bash
+mv ./tt_effective_defines.h 
+```
 
 ## Program with US1
 
@@ -35,6 +39,10 @@ cd /mnt/c/SysGCC/esp32-master/esp-idf/v5.5
 source ./export.sh
 
 cd "$TT_PROJECT_ROOT/ulx3s/ESP32"
+
+# Clean if needed
+idf.py fullclean
+
 idf.py build
 
 # For hands-off programming, be sure to define ESP32_BOOT_RTS_DTR_ENABLED in the ULX3S Makefile

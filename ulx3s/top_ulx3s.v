@@ -27,19 +27,29 @@
  *
  * When unconnected gp4, assume SPI.
  *
- * shared_spi_jtag_select = 1:
+ * shared_spi_jtag_select = 1: gp4 high/unconnected/pull-up = SPI, gp4 low/pulled down = JTAG;
+ *                             inverted for ULX3S: debug_is_jtag = ~debug_sel_sync
+ *                             With inverted logic, no additional ULX3S wiring needed for SPI default
+ *                             Pull GP4 low for JTAG
  *     ESP32 pins are connected:
  *     wifi_gpio13 -> uio[0]
  *     wifi_gpio15 -> uio[1]
  *     wifi_gpio2  <- uio[2]
  *     wifi_gpio14 -> uio[3]
  * 
- * shared_spi_jtag_select = 0:
+ * shared_spi_jtag_select = 0:  (Note TT Demoboard logic: dip switch down = 1)
+ *                              Not inverted: debug_is_jtag = debug_sel_sync; Up is SPI, 
+ *                              Move INPUT SW4 switch down for JTAG
+ *
  *     Header pins are connected:
  *     gn[2] -> uio[0] JTAG TMS
  *     gp[2] -> uio[1] JTAG TDI
  *     gn[3] <- uio[2] JTAG TDO
  *     gp[3] -> uio[3] JTAG TCK
+ *
+ * ULX3S External UART on gp0 and gp1
+ *    gp[0]  -> Soft UART Rx (ULX3S J1 Pin 6; connect to external USB TTY Tx)
+ *    gp[1]  -> Soft UART Tx (ULX3S J1 Pin 5; connect to external USB TTY Rx)
  */
 `default_nettype none
 `timescale 1ns/1ps
@@ -191,7 +201,7 @@ module top_ulx3s (
     // assign shared_spi_jtag_select = 1'b1; /* force ESP32 SPI enabled */
     assign shared_spi_jtag_select = gp4;
 `else
-    assign shared_spi_jtag_select = 1'b0;
+    assign shared_spi_jtag_select = 1'b0; /* Dip switch "up" */
 `endif
 
     /* The BTN0 "PWR" on the ULX3S is used for reset. 
@@ -316,7 +326,8 @@ module top_ulx3s (
         uart_rx_sync <= uart_rx_meta;
     end
 
-    // Map UART RX into TT input
+    // Map UART RX into TT INPUT
+    // Dip switch:     765           4                  3            210
     assign ui_in = {3'b000, shared_spi_jtag_select, uart_rx_sync, 3'b000};
 
 `endif /* UART_ENABLED */

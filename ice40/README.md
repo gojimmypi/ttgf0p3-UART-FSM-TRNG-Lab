@@ -9,7 +9,7 @@ Set the `TT_PROJECT_ROOT` and other environment variables before running the tes
 See the [source  ./env_ice40.sh](./env_ice40.sh) script and edit as needed for your environment. For example:
 
 ```text
-TT_PORT:              /dev/ttyS6
+TT_PORT:              /dev/ttyS8
 WORKSPACE:            /mnt/c/workspace
 TT_PROJECT_NAME:      ttgf-UART-FSM-TRNG-Lab
 TT_PROJECT_NAME_ALT:  ttgf_UART_FSM_TRNG_Lab

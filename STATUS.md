@@ -1,8 +1,8 @@
 # Project Status
 
-<!-- breadcrumb for testing workflows 1.0b, testing end-to-end build, release Version 1.0.4 6/18/2026 -->
+<!-- breadcrumb file for testing workflows -->
 
-Version 0.1.7
+Version 1.0.5 6/21/2026
 
 ## Status
 
@@ -23,6 +23,7 @@ Version 0.1.7
 ## TODO
 
 - Final submission version check
+- Improve getting started to test
 - Health register docs
 - Recheck GDS GH action script
 - `CLOCK_PERIOD` at 20 or 40 ns? 
